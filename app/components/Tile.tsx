@@ -10,7 +10,7 @@ type TileProps = {
 const Tile = ({ title, value, color, icon }: TileProps) => {
   return (
     <div
-      className={`group relative overflow-hidden rounded-xs p-2 text-white cursor-pointer flex flex-col justify-between items-center shadow-md`}
+      className={`group relative overflow-hidden rounded-xs p-2 text-white cursor-pointer flex flex-col justify-between items-center shadow-md active:scale-95 transition-transform`}
       style={{ backgroundColor: color || '#000' }}
     >
       {/* Hover overlay */}
