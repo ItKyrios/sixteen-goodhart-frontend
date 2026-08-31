@@ -1,4 +1,5 @@
 import useRent from '~/hooks/useRent';
+import Message from '~/components/Message';
 import { Link } from 'react-router';
 import { useLocation } from 'react-router';
 
@@ -9,9 +10,7 @@ const RentPage = () => {
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Rent Overview</h1>
-      {message && (
-        <div className='bg-green-600 rounded-xs p-3 mb-4'>{message}</div>
-      )}
+      {message && <Message message={message} />}
 
       <div className='bg-gray-900 p-4 rounded-xs shadow-md-mb-4'>
         <div className='mb-2'>

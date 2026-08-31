@@ -1,7 +1,7 @@
 {
   "amount": 215,
-  "lastPaidDate": "2026-08-23",
-  "nextDueDate": "2026-08-30",
-  "paymentMethod": "Cash",
+  "lastPaidDate": "2026-08-33",
+  "nextDueDate": "2026-09-06",
+  "paymentMethod": "Wise",
   "notes": "Rent paid on time."
 }

@@ -31,7 +31,7 @@ const RentEditPage = () => {
 
       <div className='flex flex-col gap-3 bg-gray-900 p-4 rounded-xs shadow-md-mb-4'>
         <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='amount'>Amount:</label>
+          <label htmlFor='amount'>Amount ($):</label>
           <input
             type='number'
             name='amount'

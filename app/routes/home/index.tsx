@@ -9,6 +9,7 @@ import type { Route } from './+types/index';
 import { Link } from 'react-router';
 import Tile from '~/components/Tile';
 import useRent from '~/hooks/useRent';
+import useSubscription from '~/hooks/useSubscriptions';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,13 +20,16 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   const { daysLeft } = useRent();
+  const { subscriptions, totalMonthly } = useSubscription();
   return (
     <>
       <div className='grid grid-cols-2 gap-4 p-4'>
         <Link to='/rent'>
           <Tile
             title='Rent'
-            value={`${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+            value={`${daysLeft}
+            ${daysLeft == 1 || daysLeft == -1 ? 'day' : 'days'} 
+            ${daysLeft <= 0 ? 'overdue' : 'left'}`}
             color='#4A90E2'
             icon={<FaMoneyBillWave />}
           />
@@ -49,7 +53,7 @@ export default function Home() {
         <Link to='/subscription'>
           <Tile
             title='Subscription'
-            value='2 months left'
+            value={`Total Cost: $${totalMonthly.toFixed(2)}`}
             color='#9013FE'
             icon={<FaCreditCard />}
           />

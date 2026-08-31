@@ -12,7 +12,9 @@ export default [
     route('rent/edit', './routes/rent/edit.tsx'),
     route('groceries', './routes/groceries/index.tsx'),
     route('warranty', './routes/warranty/index.tsx'),
+    route('warranty/edit/:id', './routes/warranty/edit.tsx'),
     route('subscription', './routes/subscription/index.tsx'),
+    route('subscription/edit/:id', './routes/subscription/edit.tsx'),
     route('todo', './routes/todo/index.tsx'),
   ]),
 ] satisfies RouteConfig;

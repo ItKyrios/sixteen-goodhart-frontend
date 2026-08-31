@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1",
+    "name": "Netflix",
+    "amount": 15.99,
+    "cycle": "monthly",
+    "lastRenewed": "2026-08-01",
+    "nextRenewal": "2026-09-01",
+    "paymentMethod": "wise",
+    "status": "active",
+    "notes": ""
+  },
+  {
+    "id": "2",
+    "name": "ChatGPT",
+    "amount": 29.99,
+    "cycle": "monthly",
+    "lastRenewed": "2026-08-01",
+    "nextRenewal": "2026-09-01",
+    "paymentMethod": "direct-debit",
+    "status": "active",
+    "notes": ""
+  }
+]
