@@ -1,0 +1,12 @@
+[
+  {
+    "id": "1",
+    "name": "Do Laundry",
+    "assignedTo": "pramit",
+    "createdBy": "pramit",
+    "category": "chore",
+    "priority": "low",
+    "dueDate": "2026-09-01",
+    "done": false
+  }
+]

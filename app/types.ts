@@ -1,3 +1,25 @@
+export type GroceryItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  assignedTo: string;
+  createdBy: string;
+  category: string;
+  priority: 'low' | 'medium' | 'high';
+  done: boolean;
+};
+
+export type TodoItem = {
+  id: string;
+  name: string;
+  assignedTo: string;
+  createdBy: string;
+  category: string;
+  priority: 'low' | 'medium' | 'high';
+  dueDate: string;
+  done: boolean;
+};
+
 export type Subscription = {
   id: string;
   name: string;

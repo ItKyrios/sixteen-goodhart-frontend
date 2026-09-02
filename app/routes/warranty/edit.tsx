@@ -2,6 +2,7 @@ import type { Warranty } from '~/types';
 import { useParams, Navigate, Link } from 'react-router';
 import { useState } from 'react';
 import useWarranty from '~/hooks/useWarranty';
+import { generateId } from '~/utills/uuid';
 
 const WarrantyEditPage = () => {
   const { id } = useParams();
@@ -11,7 +12,7 @@ const WarrantyEditPage = () => {
 
   const [form, setForm] = useState<Warranty>(
     existing || {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: '',
       model: '',
       amount: 0,

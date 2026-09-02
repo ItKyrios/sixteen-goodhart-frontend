@@ -2,6 +2,7 @@ import type { Subscription } from '~/types';
 import { useParams, Navigate, Link } from 'react-router';
 import { useState } from 'react';
 import useSubscriptions from '~/hooks/useSubscriptions';
+import { generateId } from '~/utills/uuid';
 
 const SubscriptionEditPage = () => {
   const { id } = useParams();
@@ -10,7 +11,7 @@ const SubscriptionEditPage = () => {
   const existing = subscriptions.find((s) => s.id === id);
   const [form, setForm] = useState<Subscription>(
     existing || {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: '',
       amount: 0,
       cycle: 'monthly',
