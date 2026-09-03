@@ -5,6 +5,8 @@ import { FaPencil } from 'react-icons/fa6';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
 import { IoTrashOutline } from 'react-icons/io5';
+import CheckListItem from '~/components/CheckListItem';
+import DoneCheckListItem from '~/components/DoneCheckListItem';
 
 const TodoPage = () => {
   const [showDone, setShowDone] = useState(false);
@@ -17,6 +19,11 @@ const TodoPage = () => {
       item.id === id ? { ...item, done: !item.done } : item,
     );
 
+    updateTodo(updated);
+  };
+
+  const deleteItem = (id: string) => {
+    const updated = items.filter((i) => i.id !== id);
     updateTodo(updated);
   };
 
@@ -39,55 +46,19 @@ const TodoPage = () => {
 
       <div className='flex flex-col gap-3'>
         {activeItems.map((item) => (
-          <div className='mb-2'>
-            <div className='bg-gray-900 p-4 rounded-t-xs shadow-md flex items-center gap-3'>
-              <input
-                type='checkbox'
-                name='done'
-                id='done'
-                checked={item.done}
-                className='cursor-pointer'
-                onChange={() => toggleDone(item.id)}
-              />
-              <div className={item.done ? 'line-through opacity-60' : ''}>
-                {item.name}
-              </div>
-              <div className='ml-auto'>
-                <Link
-                  key={item.id}
-                  to={`/todo/edit/${item.id}`}
-                  className='border border-blue-400 text-blue-400 rounded-xs py-2 px-4'
-                >
-                  <FaPencil className='inline text-xs' /> Edit
-                </Link>
-                <button
-                  key={item.id}
-                  onClick={() =>
-                    updateTodo(items.filter((i) => i.id !== item.id))
-                  }
-                  className='text-red-600 rounded-xs ml-2 cursor-pointer'
-                >
-                  <IoTrashOutline className='inline text-lg' />
-                </button>
-              </div>
-            </div>
-            <div className='text-gray-100 text-xs rounded-b-xs bg-gray-700 flex flex-row-reverse justify-between'>
-              <div className='px-4'>
-                Assigned To:{' '}
-                {item.assignedTo.charAt(0).toUpperCase() +
-                  item.assignedTo.slice(1)}
-              </div>
-              {/* <div className='px-4'>
-                {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-              </div>
-              <div className='px-4'>
-                {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
-              </div> */}
-              <div className='px-4'>
-                {new Date(item.dueDate).toDateString()}
-              </div>
-            </div>
-          </div>
+          <CheckListItem
+            key={item.id}
+            item={{
+              id: item.id,
+              label: item.name,
+              assignedTo: item.assignedTo,
+              dueDate: item.dueDate,
+              done: item.done,
+              priority: item.priority,
+            }}
+            onToggleDone={toggleDone}
+            onDeleteItem={deleteItem}
+          />
         ))}
       </div>
 
@@ -109,34 +80,12 @@ const TodoPage = () => {
               </p>
             )}
             {doneItems.map((item) => (
-              <div
+              <DoneCheckListItem
                 key={item.id}
-                className='bg-gray-800 p-2 rounded-xs flex items-center gap-2'
-              >
-                <input
-                  type='checkbox'
-                  checked={item.done}
-                  onChange={() => toggleDone(item.id)}
-                  className='scale-75'
-                />
-
-                <div className='text-sm line-through flex-1'>{item.name}</div>
-
-                <Link
-                  to={`/todo/edit/${item.id}`}
-                  className='border border-blue-500 text-blue-500 px-2 py-1 rounded text-xs'
-                >
-                  <FaPencil />
-                </Link>
-                <button
-                  onClick={() =>
-                    updateTodo(items.filter((i) => i.id !== item.id))
-                  }
-                  className='text-red-500 px-2 py-1 rounded text-xs cursor-pointer'
-                >
-                  <IoTrashOutline />
-                </button>
-              </div>
+                item={{ id: item.id, label: item.name, done: item.done }}
+                onToggleDone={toggleDone}
+                onDeleteItem={deleteItem}
+              />
             ))}
           </div>
         )}

@@ -43,3 +43,15 @@ export type Warranty = {
   notes: string;
   photoUrl: string;
 };
+
+export type CheckListItemBase = {
+  id: string;
+  label: string; // name, task, title, etc.
+  assignedTo?: string;
+  quantity?: number; // optional for modules that don't use it
+  dueDate?: string; // optional for module that don't use it
+  done: boolean;
+  createdBy?: string; //optional
+  category?: string; //optional
+  priority?: 'low' | 'medium' | 'high';
+};

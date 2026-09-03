@@ -115,7 +115,7 @@ const GroceryEditPage = () => {
         >
           <option value='low'>Low</option>
           <option value='medium'>Medium</option>
-          <option value='high'>HIgh</option>
+          <option value='high'>High</option>
         </select>
 
         <label className='flex item-center gap-3'>
