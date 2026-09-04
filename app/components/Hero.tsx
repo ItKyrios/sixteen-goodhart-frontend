@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FaPlusCircle, FaShoppingCart } from 'react-icons/fa';
 import { Link } from 'react-router';
 
@@ -42,13 +42,19 @@ const Hero = ({
       />
 
       <div className='flex gap-3'>
-        <button className='flex-1 bg-green-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'>
+        <button
+          onClick={handleGrocery}
+          className='flex-1 bg-green-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'
+        >
           <div className='flex justify-between items-center'>
             <span>Add to Grocery</span>
             <FaShoppingCart className='text-lg' />
           </div>
         </button>
-        <button className='flex-1 bg-blue-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'>
+        <button
+          onClick={handleTodo}
+          className='flex-1 bg-blue-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'
+        >
           <div className='flex justify-between items-center'>
             <span>Add Todo </span>
             <FaPlusCircle className='text-lg' />
