@@ -8,7 +8,8 @@ const ExpiryPage = () => {
   const message = location.state?.message;
 
   const sortedExpiry = items.sort(
-    (a, b) => new Date(a.expiryEnd).getTime() - new Date(b.expiryEnd).getTime(),
+    (a, b) =>
+      new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
   );
 
   return (

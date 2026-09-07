@@ -1,4 +1,4 @@
-import type { Expiry } from '~/types';
+import type { ExpiryItem } from '~/types';
 import { useParams, Navigate, Link } from 'react-router';
 import { useState } from 'react';
 import useExpiry from '~/context/ExpiryContext';
@@ -10,7 +10,7 @@ const ExpiryEditPage = () => {
 
   const existing = items.find((w) => w.id === id);
 
-  const [form, setForm] = useState<Expiry>(
+  const [form, setForm] = useState<ExpiryItem>(
     existing || {
       id: generateId(),
       name: '',
@@ -26,7 +26,7 @@ const ExpiryEditPage = () => {
   const [saved, setSaved] = useState({ state: false, message: '' });
 
   const save = () => {
-    let updated: Expiry[];
+    let updated: ExpiryItem[];
     if (existing) {
       updated = items.map((w) => (w.id === id ? form : w));
     } else {
@@ -40,7 +40,10 @@ const ExpiryEditPage = () => {
     return <Navigate to='/expiry' state={{ message: saved.message }} replace />;
   }
 
-  const handleChange = <K extends keyof Expiry>(key: K, value: Expiry[K]) => {
+  const handleChange = <K extends keyof ExpiryItem>(
+    key: K,
+    value: ExpiryItem[K],
+  ) => {
     setForm({ ...form, [key]: value });
   };
 
