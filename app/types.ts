@@ -5,7 +5,7 @@ export type GroceryItem = {
   assignedTo: string;
   createdBy: string;
   category: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: string;
   done: boolean;
 };
 
@@ -15,7 +15,7 @@ export type TodoItem = {
   assignedTo: string;
   createdBy: string;
   category: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: string;
   dueDate: string;
   done: boolean;
 };
@@ -53,5 +53,5 @@ export type CheckListItemBase = {
   done: boolean;
   createdBy?: string; //optional
   category?: string; //optional
-  priority?: 'low' | 'medium' | 'high';
+  priority?: string;
 };

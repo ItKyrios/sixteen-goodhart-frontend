@@ -1,7 +1,7 @@
 import type { GroceryItem } from '~/types';
 import { useParams, Navigate } from 'react-router';
 import { useState } from 'react';
-import useGrocery from '~/hooks/useGrocery';
+import useGrocery from '~/context/GroceryContext';
 import { generateId } from '~/utills/uuid';
 
 const GroceryEditPage = () => {

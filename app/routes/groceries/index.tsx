@@ -1,9 +1,7 @@
 import { Link, useLocation } from 'react-router';
-import useGrocery from '~/hooks/useGrocery';
+import useGrocery from '~/context/GroceryContext';
 import Message from '~/components/Message';
-import { FaPencil } from 'react-icons/fa6';
 import { useState } from 'react';
-import { IoTrashOutline } from 'react-icons/io5';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
 

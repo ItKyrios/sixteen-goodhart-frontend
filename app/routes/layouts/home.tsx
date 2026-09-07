@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router';
 import { useState } from 'react';
-import useGrocery from '~/hooks/useGrocery';
-import useTodo from '~/hooks/useTodo';
+import useGrocery from '~/context/GroceryContext';
+import useTodo from '~/context/TodoContext';
 import Hero from '~/components/Hero';
 import { generateId } from '~/utills/uuid';
 import Message from '~/components/Message';

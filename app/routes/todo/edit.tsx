@@ -1,7 +1,7 @@
 import type { TodoItem } from '~/types';
 import { useParams, Navigate } from 'react-router';
 import { useState } from 'react';
-import useTodo from '~/hooks/useTodo';
+import useTodo from '~/context/TodoContext';
 import { generateId } from '~/utills/uuid';
 
 const TodoEditPage = () => {

@@ -7,6 +7,11 @@ const WarrantyPage = () => {
   const location = useLocation();
   const message = location.state?.message;
 
+  const sortedWarranty = warranty.sort(
+    (a, b) =>
+      new Date(a.warrantyEnd).getTime() - new Date(b.warrantyEnd).getTime(),
+  );
+
   return (
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2'>
@@ -21,7 +26,7 @@ const WarrantyPage = () => {
       {message && <Message message={message} />}
 
       <div className='flex flex-col gap-3'>
-        {warranty.map((w) => (
+        {sortedWarranty.map((w) => (
           <Link key={w.id} to={`/warranty/edit/${w.id}`}>
             <div className='grid grid-cols-2 justify-between text-sm bg-gray-900 p-4 rounded-xs shadow-md hover:bg-gray-800 active:bg-gray-800'>
               <div>

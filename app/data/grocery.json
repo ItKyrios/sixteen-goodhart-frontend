@@ -2,6 +2,7 @@
   {
     "id": "1",
     "name": "Milk",
+    "quantity": 1,
     "assignedTo": "pramit",
     "createdBy": "pramit",
     "category": "food",

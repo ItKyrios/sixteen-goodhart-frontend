@@ -23,7 +23,7 @@ const SubscriptionEditPage = () => {
     },
   );
 
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState({ state: false, message: '' });
 
   const save = () => {
     let updated: Subscription[];
@@ -33,16 +33,12 @@ const SubscriptionEditPage = () => {
       updated = [...subscriptions, form];
     }
     updateSubscriptions(updated);
-    setSaved(true);
+    setSaved({ state: true, message: 'Subscription saved successfully' });
   };
 
-  if (saved) {
+  if (saved.state) {
     return (
-      <Navigate
-        to='/subscription'
-        state={{ message: 'Subscriptions saved successfully!' }}
-        replace
-      />
+      <Navigate to='/subscription' state={{ message: saved.message }} replace />
     );
   }
 
@@ -53,11 +49,27 @@ const SubscriptionEditPage = () => {
     setForm({ ...form, [key]: value });
   };
 
+  const deleteItem = (id: string) => {
+    const updated = subscriptions.filter((i) => i.id !== id);
+    updateSubscriptions(updated);
+    setSaved({ state: true, message: 'Subscription deleted successfully!' });
+  };
+
   return (
     <div className='p-4 text-white'>
-      <h1 className='text-3xl font-bold text-white mb-2'>
-        {existing ? 'Edit Subscription' : 'Add Subscription'}
-      </h1>
+      <div className='grid grid-cols-2 items-center'>
+        <h1 className='text-3xl font-bold text-white mb-2'>
+          {existing ? 'Edit Subscription' : 'Add Subscription'}
+        </h1>
+        {existing && (
+          <button
+            onClick={() => deleteItem(existing.id)}
+            className='ml-auto bg-red-600 px-8 py-2 mb-2 rounded-full hover:bg-red-700 active:scale-95 transition-transform cursor-pointer'
+          >
+            Delete
+          </button>
+        )}
+      </div>
 
       <div className='flex flex-col gap-3'>
         <div className='grid grid-cols-2'>

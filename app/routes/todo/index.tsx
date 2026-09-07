@@ -1,10 +1,7 @@
 import { Link, useLocation } from 'react-router';
-import useTodo from '~/hooks/useTodo';
+import useTodo from '~/context/TodoContext';
 import Message from '~/components/Message';
-import { FaPencil } from 'react-icons/fa6';
-import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
-import { IoTrashOutline } from 'react-icons/io5';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
 

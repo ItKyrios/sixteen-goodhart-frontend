@@ -27,7 +27,7 @@ const Message = ({ message }: MessageProps) => {
 
   return (
     <div
-      className={`fixed bottom-28 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-200 border border-green-800 text-green-800 rounded-full shadow-lg z-50 transition-all duration-500 ease-out ${slide ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'} ${hide ? 'opacity-0' : ''}`}
+      className={`fixed w-max text-center bottom-28 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-200 border border-green-800 text-green-800 rounded-full shadow-lg z-50 transition-all duration-500 ease-out ${slide ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'} ${hide ? 'opacity-0' : ''}`}
     >
       {message}
     </div>

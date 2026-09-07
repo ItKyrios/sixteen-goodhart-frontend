@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FaPlusCircle, FaShoppingCart } from 'react-icons/fa';
-import { Link } from 'react-router';
 
 type HeroProps = {
   userName: string;
