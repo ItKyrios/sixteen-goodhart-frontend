@@ -16,10 +16,23 @@ const useSubscription = () => {
     localStorage.setItem('subscriptions', JSON.stringify(updated));
   };
 
+  const totalWeekly = subscriptions
+    .filter((s) => s.cycle === 'weekly' && s.status === 'active')
+    .reduce((sum, s) => sum + s.amount * 4, 0);
+
+  const totalYearly = subscriptions
+    .filter((s) => s.cycle === 'yearly' && s.status === 'active')
+    .reduce((sum, s) => sum + s.amount / 12, 0);
+
   const totalMonthly = subscriptions
-    .filter((s) => s.cycle === 'monthly')
+    .filter((s) => s.cycle === 'monthly' && s.status === 'active')
     .reduce((sum, s) => sum + s.amount, 0);
-  return { subscriptions, updateSubscriptions, totalMonthly };
+
+  return {
+    subscriptions,
+    updateSubscriptions,
+    totalMonthly: totalWeekly + totalMonthly + totalYearly,
+  };
 };
 
 export default useSubscription;

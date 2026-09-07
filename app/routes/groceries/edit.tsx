@@ -1,5 +1,5 @@
 import type { GroceryItem } from '~/types';
-import { useParams, Navigate } from 'react-router';
+import { useParams, Navigate, Link } from 'react-router';
 import { useState } from 'react';
 import useGrocery from '~/context/GroceryContext';
 import { generateId } from '~/utills/uuid';
@@ -128,13 +128,20 @@ const GroceryEditPage = () => {
           />
           Mark as done
         </label>
-
-        <button
-          onClick={save}
-          className='bg-green-600 p-3 rounded-xs cursor-pointer'
-        >
-          Save
-        </button>
+        <div className='flex gap-4 text-center justify-between'>
+          <button
+            onClick={save}
+            className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
+          >
+            Save
+          </button>
+          <Link
+            to='/groceries'
+            className='mt-4 w-full text-red-500 border-2 border-red-600 p-3 rounded-xs active:scale-95 transition-transform'
+          >
+            Cancel
+          </Link>
+        </div>
       </div>
     </div>
   );

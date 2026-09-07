@@ -14,6 +14,8 @@ export default [
     route('groceries/edit/:id', './routes/groceries/edit.tsx'),
     route('warranty', './routes/warranty/index.tsx'),
     route('warranty/edit/:id', './routes/warranty/edit.tsx'),
+    route('expiry', './routes/expiry/index.tsx'),
+    route('expiry/edit/:id', './routes/expiry/edit.tsx'),
     route('subscription', './routes/subscription/index.tsx'),
     route('subscription/edit/:id', './routes/subscription/edit.tsx'),
     route('todo', './routes/todo/index.tsx'),

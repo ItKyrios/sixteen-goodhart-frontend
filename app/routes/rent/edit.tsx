@@ -30,15 +30,16 @@ const RentEditPage = () => {
       <h1 className='text-3xl font-bold text-white mb-2'>Edit Rent</h1>
 
       <div className='flex flex-col gap-3 bg-gray-900 p-4 rounded-xs shadow-md-mb-4'>
-        <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='amount'>Amount ($):</label>
+        <div className='grid grid-cols-4 justify-between'>
+          <label htmlFor='amount'>Amount:</label>
+          <span className='ml-auto pr-2'>$</span>
           <input
             type='number'
             name='amount'
             id='amount'
             value={form.amount}
             onChange={(e) => handleChange('amount', e.target.value)}
-            className='bg-gray-400 px-4 text-gray-900'
+            className='col-span-2 bg-gray-400 px-4 text-gray-900'
           />
         </div>
         <div className='grid grid-cols-2 justify-between'>

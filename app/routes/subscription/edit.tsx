@@ -83,15 +83,16 @@ const SubscriptionEditPage = () => {
             className='px-2 bg-gray-200 text-gray-900'
           />
         </div>
-        <div className='grid grid-cols-2'>
-          <label htmlFor='amount'>Amount ($):</label>
+        <div className='grid grid-cols-4'>
+          <label htmlFor='amount'>Amount:</label>
+          <span className='ml-auto pr-2'>$</span>
           <input
             type='number'
             name='amount'
             id='amount'
             value={form.amount}
             onChange={(e) => handleChange('amount', Number(e.target.value))}
-            className='px-2 bg-gray-200 text-gray-900'
+            className='px-2 col-span-2 bg-gray-200 text-gray-900'
           />
         </div>
         <div className='grid grid-cols-2'>

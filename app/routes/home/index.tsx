@@ -1,5 +1,6 @@
 import {
   FaClipboardCheck,
+  FaClock,
   FaCreditCard,
   FaListAlt,
   FaMoneyBillWave,
@@ -13,6 +14,7 @@ import useSubscription from '~/hooks/useSubscriptions';
 import useGrocery from '~/context/GroceryContext';
 import useTodo from '~/context/TodoContext';
 import useWarranty from '~/hooks/useWarranty';
+import useExpiry from '~/context/ExpiryContext';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -25,15 +27,24 @@ export default function Home() {
   const { daysLeft } = useRent();
   const { items: groceryItems } = useGrocery();
   const { warranty } = useWarranty();
+  const { items: expiryItems } = useExpiry();
   const { totalMonthly } = useSubscription();
   const { items: todoItems } = useTodo();
 
   const activeGroceryItems = groceryItems.filter((i) => !i.done);
   const activeTodoItems = todoItems.filter((i) => !i.done);
+  const currentDate = new Date();
   const sortedWarrantyFirstItem = warranty
     .sort(
       (a, b) =>
         new Date(a.warrantyEnd).getTime() - new Date(b.warrantyEnd).getTime(),
+    )
+    .at(0);
+
+  const sortedExpiryFirstItem = expiryItems
+    .sort(
+      (a, b) =>
+        new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
     )
     .at(0);
 
@@ -61,15 +72,47 @@ export default function Home() {
         <Link to='/warranty'>
           <Tile
             title='Warranty'
-            value={`${sortedWarrantyFirstItem?.expiryDate ? new Date(sortedWarrantyFirstItem?.expiryDate).toDateString() : new Date(sortedWarrantyFirstItem?.warrantyEnd || 0).toDateString()}`}
+            value={new Date(
+              sortedWarrantyFirstItem?.warrantyEnd || 0,
+            ).toDateString()}
             color='#ab792a'
             icon={<FaClipboardCheck />}
+            urgency={
+              new Date(sortedWarrantyFirstItem?.warrantyEnd || 0).getTime() <
+              new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth() + 1,
+                currentDate.getDate(),
+              ).getTime()
+                ? 'high'
+                : ''
+            }
+          />
+        </Link>
+        <Link to='/expiry'>
+          <Tile
+            title='Expiry'
+            value={new Date(
+              sortedExpiryFirstItem?.expiryDate || 0,
+            ).toDateString()}
+            color='#ab352a'
+            icon={<FaClock />}
+            urgency={
+              new Date(sortedExpiryFirstItem?.expiryDate || 0).getTime() <
+              new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate() + 4,
+              ).getTime()
+                ? 'high'
+                : ''
+            }
           />
         </Link>
         <Link to='/subscription'>
           <Tile
             title='Subscription'
-            value={`Total Cost: $${totalMonthly.toFixed(2)}`}
+            value={`Total Cost: $${totalMonthly.toFixed(2)}/m`}
             color='#9013FE'
             icon={<FaCreditCard />}
           />

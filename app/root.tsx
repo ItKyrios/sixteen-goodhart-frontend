@@ -12,6 +12,7 @@ import './app.css';
 import Header from './components/Header';
 import { GroceryProvider } from './context/GroceryContext';
 import { TodoProvider } from './context/TodoContext';
+import { ExpiryProvider } from './context/ExpiryContext';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -46,7 +47,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Header />
         <GroceryProvider>
           <TodoProvider>
-            <main>{children}</main>
+            <ExpiryProvider>
+              <main>{children}</main>
+            </ExpiryProvider>
           </TodoProvider>
         </GroceryProvider>
         <ScrollRestoration />

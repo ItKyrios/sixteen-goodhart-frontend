@@ -38,8 +38,18 @@ export type Warranty = {
   model: string;
   amount: number;
   purchaseDate: string;
-  expiryDate: string;
   warrantyEnd: string;
+  notes: string;
+  photoUrl: string;
+};
+
+export type ExpiryItem = {
+  id: string;
+  name: string;
+  model: string;
+  amount: number;
+  purchaseDate: string;
+  expiryDate: string;
   notes: string;
   photoUrl: string;
 };

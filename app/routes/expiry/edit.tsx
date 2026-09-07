@@ -1,23 +1,23 @@
-import type { Warranty } from '~/types';
+import type { Expiry } from '~/types';
 import { useParams, Navigate, Link } from 'react-router';
 import { useState } from 'react';
-import useWarranty from '~/hooks/useWarranty';
+import useExpiry from '~/context/ExpiryContext';
 import { generateId } from '~/utills/uuid';
 
-const WarrantyEditPage = () => {
+const ExpiryEditPage = () => {
   const { id } = useParams();
-  const { warranty, updateWarranty } = useWarranty();
+  const { items, updateExpiry } = useExpiry();
 
-  const existing = warranty.find((w) => w.id === id);
+  const existing = items.find((w) => w.id === id);
 
-  const [form, setForm] = useState<Warranty>(
+  const [form, setForm] = useState<Expiry>(
     existing || {
       id: generateId(),
       name: '',
       model: '',
       amount: 0,
       purchaseDate: '',
-      warrantyEnd: '',
+      expiryDate: '',
       notes: '',
       photoUrl: '',
     },
@@ -26,32 +26,27 @@ const WarrantyEditPage = () => {
   const [saved, setSaved] = useState({ state: false, message: '' });
 
   const save = () => {
-    let updated: Warranty[];
+    let updated: Expiry[];
     if (existing) {
-      updated = warranty.map((w) => (w.id === id ? form : w));
+      updated = items.map((w) => (w.id === id ? form : w));
     } else {
-      updated = [...warranty, form];
+      updated = [...items, form];
     }
-    updateWarranty(updated);
-    setSaved({ state: true, message: 'Warranty saved successfully' });
+    updateExpiry(updated);
+    setSaved({ state: true, message: 'Item expiry saved successfully' });
   };
 
   if (saved.state) {
-    return (
-      <Navigate to='/warranty' state={{ message: saved.message }} replace />
-    );
+    return <Navigate to='/expiry' state={{ message: saved.message }} replace />;
   }
 
-  const handleChange = <K extends keyof Warranty>(
-    key: K,
-    value: Warranty[K],
-  ) => {
+  const handleChange = <K extends keyof Expiry>(key: K, value: Expiry[K]) => {
     setForm({ ...form, [key]: value });
   };
 
   const deleteItem = (id: string) => {
-    const updated = warranty.filter((i) => i.id !== id);
-    updateWarranty(updated);
+    const updated = items.filter((i) => i.id !== id);
+    updateExpiry(updated);
     setSaved({ state: true, message: 'Item deleted successfully!' });
   };
 
@@ -59,7 +54,7 @@ const WarrantyEditPage = () => {
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>
-          {existing ? 'Edit Warranty' : 'Add Warranty'}
+          {existing ? 'Edit Expiry' : 'Add Expiry'}
         </h1>
         {existing && (
           <button
@@ -118,13 +113,13 @@ const WarrantyEditPage = () => {
           />
         </div>
         <div className='grid grid-cols-2'>
-          <label htmlFor='warrantyEnd'>Warranty End:</label>
+          <label htmlFor='expiryDate'>Expiry Date:</label>
           <input
             type='date'
-            name='warrantyEnd'
-            id='warrantyEnd'
-            value={form.warrantyEnd}
-            onChange={(e) => handleChange('warrantyEnd', e.target.value)}
+            name='expiryDate'
+            id='expiryDate'
+            value={form.expiryDate}
+            onChange={(e) => handleChange('expiryDate', e.target.value)}
             className='px-2 bg-gray-200 text-gray-900'
           />
         </div>
@@ -157,7 +152,7 @@ const WarrantyEditPage = () => {
             Save
           </button>
           <Link
-            to='/warranty'
+            to='/expiry'
             className='mt-4 w-full text-red-500 border-2 border-red-600 p-3 rounded-xs active:scale-95 transition-transform'
           >
             Cancel
@@ -168,4 +163,4 @@ const WarrantyEditPage = () => {
   );
 };
 
-export default WarrantyEditPage;
+export default ExpiryEditPage;
