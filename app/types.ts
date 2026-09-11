@@ -1,3 +1,13 @@
+export type Rent = {
+  id: string;
+  documentId: string;
+  amount: number;
+  lastPaidDate: string;
+  nextDueDate: string;
+  paymentMethod: string;
+  notes: string;
+};
+
 export type GroceryItem = {
   id: string;
   name: string;
@@ -64,4 +74,18 @@ export type CheckListItemBase = {
   createdBy?: string; //optional
   category?: string; //optional
   priority?: string;
+};
+
+export type StrapiResponse<T> = {
+  data: T[];
+};
+
+export type StrapiRent = {
+  id: string;
+  documentId: string;
+  amount: number;
+  lastPaidDate: string;
+  nextDueDate: string;
+  paymentMethod: string;
+  notes: string;
 };

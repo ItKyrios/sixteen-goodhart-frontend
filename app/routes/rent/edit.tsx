@@ -1,105 +1,61 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-import useRent from '~/hooks/useRent';
-import { Navigate } from 'react-router';
+import type { Route } from './+types';
+import type { StrapiRent } from '~/types';
+import { Form, Link, redirect } from 'react-router';
+import RentForm from '~/components/rent/RentForm';
+import { getRentByDocumentId, updateRent } from '~/services/rent.server';
 
-const RentEditPage = () => {
-  const { rent, updateRent } = useRent();
-  const [form, setForm] = useState(rent);
-  const [saved, setSaved] = useState(false);
+// Route params for manual routing
+type Params = {
+  documentId: string;
+};
 
-  const handleChange = (key: string, value: string) => {
-    setForm({ ...form, [key]: value });
+// Loader return type
+type LoaderData = {
+  rentData: StrapiRent;
+};
+
+// Loader: Fetch rent by documentId
+export async function loader({
+  params,
+}: Route.LoaderArgs & { params: Params }): Promise<LoaderData> {
+  const rentData = await getRentByDocumentId(params.documentId);
+  return { rentData };
+}
+
+// Action: Update rent in Strapi
+export async function action({
+  request,
+  params,
+}: Route.ActionArgs & { params: Params }) {
+  const { documentId } = params;
+  const form = await request.formData();
+
+  const updatedRent = {
+    amount: Number(form.get('amount')),
+    lastPaidDate: String(form.get('lastPaidDate')),
+    nextDueDate: String(form.get('nextDueDate')),
+    paymentMethod: String(form.get('paymentMethod')),
+    notes: String(form.get('notes')),
   };
-  const save = () => {
-    updateRent(form);
-    setSaved(true);
-  };
-  if (saved) {
-    return (
-      <Navigate
-        to='/rent'
-        state={{ message: 'Rent updated successfully!' }}
-        replace
-      />
-    );
-  }
+
+  await updateRent(documentId, updatedRent);
+  return redirect(`/rent?message=Rent updated successfully!`);
+}
+
+const RentEditPage = ({ loaderData }: { loaderData: LoaderData }) => {
+  const { rentData } = loaderData;
 
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Edit Rent</h1>
 
-      <div className='flex flex-col gap-3 bg-gray-900 p-4 rounded-xs shadow-md-mb-4'>
-        <div className='grid grid-cols-4 justify-between'>
-          <label htmlFor='amount'>Amount:</label>
-          <span className='ml-auto pr-2'>$</span>
-          <input
-            type='number'
-            name='amount'
-            id='amount'
-            value={form.amount}
-            onChange={(e) => handleChange('amount', e.target.value)}
-            className='col-span-2 bg-gray-400 px-4 text-gray-900'
-          />
-        </div>
-        <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='lastPaidDate'>Last Paid:</label>
-          <input
-            type='date'
-            name='lastPaidDate'
-            id='lastPaidDate'
-            value={form.lastPaidDate}
-            onChange={(e) => handleChange('lastPaidDate', e.target.value)}
-            className='bg-gray-400 px-4 text-gray-900'
-          />
-        </div>
-        <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='nextDueDate'>Next Due:</label>
-          <input
-            type='date'
-            name='nextDueDate'
-            id='nextDueDate'
-            value={form.nextDueDate}
-            onChange={(e) => handleChange('nextDueDate', e.target.value)}
-            className='bg-gray-400 px-4 text-gray-900'
-          />
-        </div>
-        <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='paymentMethod'>Payment Method:</label>
-          <input
-            type='text'
-            name='paymentMethod'
-            id='paymentMethod'
-            value={form.paymentMethod}
-            onChange={(e) => handleChange('paymentMethod', e.target.value)}
-            className='bg-gray-400 px-4 text-gray-900'
-          />
-        </div>
-        <div className='grid grid-cols-2 justify-between'>
-          <label htmlFor='notes'>Notes:</label>
-          <textarea
-            name='notes'
-            id='notes'
-            value={form.notes}
-            onChange={(e) => handleChange('notes', e.target.value)}
-            className='bg-gray-400 px-4 text-gray-900'
-          />
-        </div>
-        <div className='flex gap-4 text-center justify-between'>
-          <button
-            className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
-            onClick={save}
-          >
-            Save
-          </button>
-          <Link
-            to='/rent'
-            className='mt-4 w-full text-red-500 border-2 border-red-600 p-3 rounded-xs active:scale-95 transition-transform'
-          >
-            Cancel
-          </Link>
-        </div>
-      </div>
+      <Form
+        method='post'
+        className='flex flex-col gap-3 bg-gray-900 p-4 rounded-xs shadow-md-mb-4'
+      >
+        {/* Component: Edit Rent Form */}
+        <RentForm rentData={rentData} />
+      </Form>
     </div>
   );
 };
