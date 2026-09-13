@@ -1,5 +1,6 @@
 import type { Rent, StrapiResponse, StrapiRent } from '~/types';
 
+// Fetch single rent item
 export async function getRentByDocumentId(
   documentId: string,
 ): Promise<StrapiRent> {
@@ -10,6 +11,7 @@ export async function getRentByDocumentId(
   return json.data;
 }
 
+// Fetch all rent items
 export async function getRents(): Promise<{ rentData: Rent[] }> {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/rents`);
   const json: StrapiResponse<StrapiRent> = await res.json();
@@ -27,6 +29,7 @@ export async function getRents(): Promise<{ rentData: Rent[] }> {
   return { rentData };
 }
 
+// Update rent
 export async function updateRent(
   documentId: string,
   updatedRent: Partial<StrapiRent>,

@@ -17,7 +17,7 @@ const CheckListItem = ({
   onDeleteItem,
 }: CheckListItemProps) => {
   return (
-    <div className='mb-2' key={item.id}>
+    <div className='mb-2' key={item.documentId}>
       <div className='bg-gray-900 p-4 rounded-t-xs shadow-md flex justify-between items-center gap-3'>
         <input
           type='checkbox'
@@ -25,7 +25,7 @@ const CheckListItem = ({
           id='done'
           checked={item.done}
           className='cursor-pointer'
-          onChange={() => onToggleDone(item.id)}
+          onChange={() => onToggleDone(item.documentId || '')}
         />
         <div
           className={`max-w-40 md:max-w-100 font-semibold ${item.done ? 'line-through opacity-60' : ''}`}
@@ -41,13 +41,13 @@ const CheckListItem = ({
         )}
         <div className='ml-auto'>
           <Link
-            to={`${link}${item.id}`}
+            to={`${link}${item.documentId || ''}`}
             className='border border-blue-400 text-blue-400 rounded-xs py-2 px-4'
           >
             <FaPencil className='inline text-xs' /> Edit
           </Link>
           <button
-            onClick={() => onDeleteItem(item.id)}
+            onClick={() => onDeleteItem(item.documentId || '')}
             className='text-red-600 rounded-xs ml-2 cursor-pointer'
           >
             <IoTrashOutline className='inline text-lg' />

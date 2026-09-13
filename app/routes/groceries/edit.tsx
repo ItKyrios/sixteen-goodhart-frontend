@@ -1,136 +1,62 @@
+import type { Route } from './+types';
 import type { GroceryItem } from '~/types';
-import { useParams, Navigate, Link } from 'react-router';
-import { useState } from 'react';
-import useGrocery from '~/context/GroceryContext';
-import { generateId } from '~/utills/uuid';
+import { Link, Form, redirect } from 'react-router';
+import {
+  getGroceryByDocumentId,
+  updateGrocery,
+} from '~/services/grocery.server';
+import GroceryForm from '~/components/grocery/GroceryForm';
 
-const GroceryEditPage = () => {
-  const { id } = useParams();
-  const { items, updateGrocery } = useGrocery();
+type Params = { documentId: string };
 
-  const existing = items.find((i) => i.id === id);
+export async function loader({
+  params,
+}: Route.LoaderArgs & { params: Params }): Promise<{
+  grocery: GroceryItem;
+}> {
+  const { documentId } = params;
+  const grocery = await getGroceryByDocumentId(documentId);
+  if (!grocery) throw new Response('Grocery not found', { status: 404 });
+  return { grocery };
+}
 
-  const [form, setForm] = useState<GroceryItem>(
-    existing || {
-      id: generateId(),
-      name: '',
-      quantity: 0,
-      assignedTo: '',
-      createdBy: 'loggedinUser',
-      category: '',
-      priority: 'low',
-      done: false,
-    },
-  );
+export async function action({
+  request,
+  params,
+}: Route.ActionArgs & { params: Params }) {
+  const { documentId } = params;
+  const form = await request.formData();
 
-  const [saved, setSaved] = useState(false);
-  const save = () => {
-    let updated: GroceryItem[];
-
-    if (existing) {
-      updated = items.map((i) => (i.id === id ? form : i));
-    } else {
-      updated = [...items, form];
-    }
-    updateGrocery(updated);
-    setSaved(true);
+  const updated = {
+    name: String(form.get('name')),
+    quantity: Number(form.get('quantity')),
+    assignedTo: String(form.get('assginedTo')),
+    category: String(form.get('category')),
+    priority: String(form.get('priority')),
+    done: form.get('done') === 'on',
   };
 
-  if (saved) {
-    return (
-      <Navigate
-        to='/groceries'
-        state={{ message: 'Grocery item saved!' }}
-        replace
-      />
-    );
-  }
+  await updateGrocery(documentId, updated);
+  return redirect('/groceries?message=Grocery item updated successfully!');
+}
 
-  const handleChange = <K extends keyof GroceryItem>(
-    key: K,
-    value: GroceryItem[K],
-  ) => {
-    setForm({ ...form, [key]: value });
-  };
+const GroceryEditPage = ({
+  loaderData,
+}: {
+  loaderData: { grocery: GroceryItem };
+}) => {
+  const { grocery } = loaderData;
 
   return (
     <div className='p-4 text-white'>
-      <h1 className='text-3xl font-bold text-white mb-2'>
-        {existing ? 'Edit Grocery Item' : 'Add Grocery Item'}
-      </h1>
+      <h1 className='text-3xl font-bold text-white mb-2'>Edit Grocery Item</h1>
 
-      <div className='flex flex-col gap-3'>
-        <label htmlFor='name'>Item Name:</label>
-        <input
-          type='text'
-          name='name'
-          id='name'
-          value={form.name}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('name', e.target.value)}
-        />
+      <Form method='post' className='flex flex-col gap-3'>
+        <GroceryForm grocery={grocery} />
 
-        <label htmlFor='quantity'>Item Qty:</label>
-        <input
-          type='number'
-          name='quantity'
-          id='quantity'
-          value={form.quantity}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('quantity', Number(e.target.value))}
-        />
-
-        <label htmlFor='assignedTo'>Assigned To:</label>
-        <input
-          type='text'
-          name='assignedTo'
-          id='assignedTo'
-          value={form.assignedTo}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('assignedTo', e.target.value)}
-        />
-
-        <label htmlFor='category'>Category:</label>
-        <input
-          type='text'
-          name='category'
-          id='category'
-          value={form.category}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('category', e.target.value)}
-        />
-
-        <label htmlFor='priority'>Priority:</label>
-        <select
-          name='priority'
-          id='priority'
-          value={form.priority}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) =>
-            handleChange(
-              'priority',
-              e.target.value as 'low' | 'medium' | 'high',
-            )
-          }
-        >
-          <option value='low'>Low</option>
-          <option value='medium'>Medium</option>
-          <option value='high'>High</option>
-        </select>
-
-        <label className='flex item-center gap-3'>
-          <input
-            type='checkbox'
-            name='done'
-            id='done'
-            checked={form.done}
-            onChange={(e) => handleChange('done', e.target.checked)}
-          />
-          Mark as done
-        </label>
         <div className='flex gap-4 text-center justify-between'>
           <button
-            onClick={save}
+            type='submit'
             className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
           >
             Save
@@ -142,7 +68,7 @@ const GroceryEditPage = () => {
             Cancel
           </Link>
         </div>
-      </div>
+      </Form>
     </div>
   );
 };

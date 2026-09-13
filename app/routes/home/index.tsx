@@ -15,6 +15,9 @@ import useGrocery from '~/context/GroceryContext';
 import useTodo from '~/context/TodoContext';
 import useWarranty from '~/hooks/useWarranty';
 import useExpiry from '~/context/ExpiryContext';
+import { getGroceries } from '~/services/grocery.server';
+import type { GroceryItem } from '~/types';
+import { useEffect } from 'react';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -23,9 +26,23 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Home() {
+// Fetching groceries data from strapi
+export async function loader({
+  request,
+}: Route.LoaderArgs): Promise<{ groceriesData: GroceryItem[] }> {
+  const groceriesData = await getGroceries();
+  return { groceriesData };
+}
+
+export default function Home({ loaderData }: Route.ComponentProps) {
+  // Setting up groceries data to global context
+  const { groceriesData } = loaderData;
+  const { groceries: groceryItems, setGroceries } = useGrocery();
+  useEffect(() => {
+    setGroceries(groceriesData);
+  }, [groceriesData, setGroceries]);
+
   const { daysLeft } = useRent();
-  const { items: groceryItems } = useGrocery();
   const { warranty } = useWarranty();
   const { items: expiryItems } = useExpiry();
   const { totalMonthly } = useSubscription();

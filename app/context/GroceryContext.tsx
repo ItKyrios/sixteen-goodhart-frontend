@@ -1,43 +1,29 @@
 import type { GroceryItem } from '~/types';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
-import data from '~/data/grocery.json';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type GroceryContextValue = {
-  items: GroceryItem[];
-  updateGrocery: (updated: GroceryItem[]) => void;
+  groceries: GroceryItem[];
+  setGroceries: (items: GroceryItem[]) => void;
+  updateLocalGrocery: (item: GroceryItem) => void;
 };
 
-const GroceryContext = createContext<GroceryContextValue | undefined>(
-  undefined,
-);
+const GroceryContext = createContext<GroceryContextValue | null>(null);
 
 export function GroceryProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<GroceryItem[]>([]);
+  const [groceries, setGroceries] = useState<GroceryItem[]>([]);
 
-  // Load from localStorage AFTER hydration
-  useEffect(() => {
-    const saved = window.localStorage.getItem('grocery');
-    if (saved) {
-      setItems(JSON.parse(saved));
-    } else {
-      setItems(data);
-    }
-  }, []);
-
-  const updateGrocery = (updated: GroceryItem[]) => {
-    setItems(updated);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('grocery', JSON.stringify(updated));
-    }
+  const updateLocalGrocery = (updatedItem: GroceryItem) => {
+    setGroceries((prev) =>
+      prev.map((item) =>
+        item.documentId === updatedItem.documentId ? updatedItem : item,
+      ),
+    );
   };
+
   return (
-    <GroceryContext.Provider value={{ items, updateGrocery }}>
+    <GroceryContext.Provider
+      value={{ groceries, setGroceries, updateLocalGrocery }}
+    >
       {children}
     </GroceryContext.Provider>
   );

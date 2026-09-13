@@ -9,11 +9,10 @@ export type Rent = {
 };
 
 export type GroceryItem = {
-  id: string;
+  documentId?: string;
   name: string;
   quantity: number;
   assignedTo: string;
-  createdBy: string;
   category: string;
   priority: string;
   done: boolean;
@@ -65,7 +64,7 @@ export type ExpiryItem = {
 };
 
 export type CheckListItemBase = {
-  id: string;
+  documentId?: string;
   label: string; // name, task, title, etc.
   assignedTo?: string;
   quantity?: number; // optional for modules that don't use it
@@ -80,6 +79,10 @@ export type StrapiResponse<T> = {
   data: T[];
 };
 
+export type StrapiSingleResponse<T> = {
+  data: T;
+};
+
 export type StrapiRent = {
   id: string;
   documentId: string;
@@ -88,4 +91,15 @@ export type StrapiRent = {
   nextDueDate: string;
   paymentMethod: string;
   notes: string;
+};
+
+export type StrapiGrocery = {
+  id: string;
+  documentId: string;
+  name: string;
+  quantity: number;
+  assignedTo: string;
+  category: string;
+  priority: string;
+  done: boolean;
 };

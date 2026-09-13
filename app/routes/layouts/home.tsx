@@ -12,22 +12,20 @@ const HomeLayout = () => {
   const navigation = useNavigation();
   const isLoading = navigation.state == 'loading';
 
-  const { items: groceryItems, updateGrocery } = useGrocery();
+  const { groceries: groceryItems, setGroceries } = useGrocery();
   const { items: todoItems, updateTodo } = useTodo();
   const [saved, setSaved] = useState('');
 
   const addQuickGrocery = (name: string) => {
     const newItem = {
-      id: generateId(),
       name,
       assignedTo: 'you',
-      createdBy: 'you',
       category: '',
-      priority: 'medium' as 'low' | 'medium' | 'high',
+      priority: 'medium',
       quantity: 1,
       done: false,
     };
-    updateGrocery([...groceryItems, newItem]);
+    setGroceries([...groceryItems, newItem]);
     setSaved('Grocery');
   };
 
@@ -38,7 +36,7 @@ const HomeLayout = () => {
       assignedTo: 'you',
       createdBy: 'you',
       category: '',
-      priority: 'medium' as 'low' | 'medium' | 'high',
+      priority: 'medium',
       dueDate: '',
       done: false,
     };

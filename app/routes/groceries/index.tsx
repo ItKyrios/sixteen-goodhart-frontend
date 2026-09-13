@@ -1,38 +1,61 @@
+import type { Route } from './+types';
 import { Link, useLocation } from 'react-router';
 import useGrocery from '~/context/GroceryContext';
 import Message from '~/components/Message';
-import { useState } from 'react';
+import type { GroceryItem } from '~/types';
+import { getGroceries } from '~/services/grocery.server';
+import { useEffect, useState } from 'react';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
 
-const GroceriesPage = () => {
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: 'Sixteen Goodhart | Groceries' },
+    { name: 'description', content: 'A web app for home' },
+  ];
+}
+
+export async function loader({
+  request,
+}: Route.LoaderArgs): Promise<{ groceriesData: GroceryItem[] }> {
+  const groceriesData = await getGroceries();
+  return { groceriesData };
+}
+
+const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
   const [showDone, setShowDone] = useState(false);
-  const { items, updateGrocery } = useGrocery();
+  const { groceriesData } = loaderData;
+  const { groceries, setGroceries } = useGrocery();
+  useEffect(() => {
+    setGroceries(groceriesData);
+  }, [groceriesData, setGroceries]);
+
   const location = useLocation();
   const message = location.state?.message;
 
-  const toggleDone = (id: string) => {
-    const updated = items.map((item) =>
-      item.id === id ? { ...item, done: !item.done } : item,
+  const toggleDone = (documentId: string) => {
+    const updated = groceries.map((item) =>
+      item.documentId === documentId ? { ...item, done: !item.done } : item,
     );
-
-    updateGrocery(updated);
+    setGroceries(updated);
   };
 
-  const deleteItem = (id: string) => {
-    const updated = items.filter((i) => i.id !== id);
-    updateGrocery(updated);
+  const deleteItem = (documentId: string) => {
+    const updated = groceries.filter((i) => i.documentId !== documentId);
+    setGroceries(updated);
   };
 
-  const activeItems = items.filter((i) => !i.done);
-  const doneItems = items.filter((i) => i.done);
+  const activeItems = groceries.filter((i) => !i.done);
+  const doneItems = groceries.filter((i) => i.done);
+
+  console.log(activeItems);
 
   return (
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>Groceries</h1>
         <Link
-          to='/groceries/edit/new'
+          to='/groceries/new'
           className='ml-auto bg-green-600 px-8 py-2 mb-2 rounded-full hover:bg-green-700 active:scale-95 transition-transform cursor-pointer'
         >
           Add
@@ -44,9 +67,9 @@ const GroceriesPage = () => {
       <div className='flex flex-col gap-3'>
         {activeItems.map((item) => (
           <CheckListItem
-            key={item.id}
+            key={item.documentId}
             item={{
-              id: item.id,
+              documentId: item.documentId,
               label: item.name,
               assignedTo: item.assignedTo,
               quantity: item.quantity || undefined,
@@ -78,8 +101,12 @@ const GroceriesPage = () => {
             )}
             {doneItems.map((item) => (
               <DoneCheckListItem
-                key={item.id}
-                item={{ id: item.id, label: item.name, done: item.done }}
+                key={item.documentId}
+                item={{
+                  documentId: item.documentId,
+                  label: item.name,
+                  done: item.done,
+                }}
                 onToggleDone={toggleDone}
                 onDeleteItem={deleteItem}
               />
