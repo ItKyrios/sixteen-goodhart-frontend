@@ -1,41 +1,29 @@
 import type { ExpiryItem } from '~/types';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
-import data from '~/data/expiry.json';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type ExpiryContextValue = {
-  items: ExpiryItem[];
-  updateExpiry: (updated: ExpiryItem[]) => void;
+  expiries: ExpiryItem[];
+  setExpiries: (items: ExpiryItem[]) => void;
+  updateLocalExpiry: (updated: ExpiryItem) => void;
 };
 
-const ExpiryContext = createContext<ExpiryContextValue | undefined>(undefined);
+const ExpiryContext = createContext<ExpiryContextValue | null>(null);
 
 export function ExpiryProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<ExpiryItem[]>([]);
+  const [expiries, setExpiries] = useState<ExpiryItem[]>([]);
 
-  // Load from localStorage AFTER hydration
-  useEffect(() => {
-    const saved = window.localStorage.getItem('expiry');
-    if (saved) {
-      setItems(JSON.parse(saved));
-    } else {
-      setItems(data);
-    }
-  }, []);
-
-  const updateExpiry = (updated: ExpiryItem[]) => {
-    setItems(updated);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('expiry', JSON.stringify(updated));
-    }
+  const updateLocalExpiry = (updatedItem: ExpiryItem) => {
+    setExpiries((prev) =>
+      prev.map((item) =>
+        item.documentId === updatedItem.documentId ? updatedItem : item,
+      ),
+    );
   };
+
   return (
-    <ExpiryContext.Provider value={{ items, updateExpiry }}>
+    <ExpiryContext.Provider
+      value={{ expiries, setExpiries, updateLocalExpiry }}
+    >
       {children}
     </ExpiryContext.Provider>
   );

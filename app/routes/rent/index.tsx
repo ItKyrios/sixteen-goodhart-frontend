@@ -1,9 +1,11 @@
 import type { Route } from './+types';
-import type { Rent } from '~/types';
+import type { StrapiRent } from '~/types';
 import Message from '~/components/Message';
 import { useLocation } from 'react-router';
 import { getRents } from '~/services/rent.server';
 import RentOverviewForm from '~/components/rent/RentOverviewForm';
+import useRent from '~/context/RentContext';
+import { useEffect } from 'react';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,21 +14,21 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs): Promise<Rent[]> {
+export async function loader({
+  request,
+}: Route.LoaderArgs): Promise<StrapiRent[]> {
   const rentData = await getRents();
   return rentData.rentData;
 }
 
 const RentPage = ({ loaderData }: Route.ComponentProps) => {
   const rentData = loaderData;
-  const rent = rentData;
+  const { rents: rent, setRents, calcDaysLeft } = useRent();
+  useEffect(() => {
+    setRents(rentData);
+  }, [rentData, setRents]);
 
-  const daysLeft = (() => {
-    const due = new Date(rent[0].nextDueDate);
-    const now = new Date();
-    const diff = due.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  })();
+  const daysLeft = calcDaysLeft(rentData[0]);
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');
@@ -35,8 +37,12 @@ const RentPage = ({ loaderData }: Route.ComponentProps) => {
       <h1 className='text-3xl font-bold text-white mb-2'>Rent Overview</h1>
       {message && <Message message={message} />}
 
-      {rent.map((rentData) => (
-        <RentOverviewForm rentData={rentData} daysLeft={daysLeft} />
+      {rent.map((rentItem) => (
+        <RentOverviewForm
+          key={rentItem.documentId}
+          rentData={rentItem}
+          daysLeft={daysLeft}
+        />
       ))}
     </div>
   );

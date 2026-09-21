@@ -30,8 +30,8 @@ const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
     setGroceries(groceriesData);
   }, [groceriesData, setGroceries]);
 
-  const location = useLocation();
-  const message = location.state?.message;
+  const { search } = useLocation();
+  const message = new URLSearchParams(search).get('message');
 
   const toggleDone = (documentId: string) => {
     const updated = groceries.map((item) =>
@@ -47,8 +47,6 @@ const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
 
   const activeItems = groceries.filter((i) => !i.done);
   const doneItems = groceries.filter((i) => i.done);
-
-  console.log(activeItems);
 
   return (
     <div className='p-4 text-white'>

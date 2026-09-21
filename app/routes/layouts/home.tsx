@@ -1,59 +1,16 @@
 import { Outlet } from 'react-router';
 import { useNavigation } from 'react-router';
-import { useState } from 'react';
-import useGrocery from '~/context/GroceryContext';
-import useTodo from '~/context/TodoContext';
 import Hero from '~/components/Hero';
-import { generateId } from '~/utills/uuid';
-import Message from '~/components/Message';
 import { FadeLoader } from 'react-spinners';
 
 const HomeLayout = () => {
   const navigation = useNavigation();
   const isLoading = navigation.state == 'loading';
 
-  const { groceries: groceryItems, setGroceries } = useGrocery();
-  const { items: todoItems, updateTodo } = useTodo();
-  const [saved, setSaved] = useState('');
-
-  const addQuickGrocery = (name: string) => {
-    const newItem = {
-      name,
-      assignedTo: 'you',
-      category: '',
-      priority: 'medium',
-      quantity: 1,
-      done: false,
-    };
-    setGroceries([...groceryItems, newItem]);
-    setSaved('Grocery');
-  };
-
-  const addQuickTodo = (name: string) => {
-    const newItem = {
-      id: generateId(),
-      name,
-      assignedTo: 'you',
-      createdBy: 'you',
-      category: '',
-      priority: 'medium',
-      dueDate: '',
-      done: false,
-    };
-    updateTodo([...todoItems, newItem]);
-    setSaved('Todo');
-  };
-
   return (
     <>
-      {saved.length > 0 && (
-        <Message key={Date.now()} message={`${saved} item added!`} />
-      )}
-      <Hero
-        userName='Pramit'
-        onAddGrocery={addQuickGrocery}
-        onAddTodo={addQuickTodo}
-      />
+      <Hero userName='Pramit' />
+
       <section className='max-w-6xl mx-auto px-6 my-8'>
         {/* Overlay spinner here */}
         {isLoading && (

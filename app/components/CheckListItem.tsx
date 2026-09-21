@@ -24,7 +24,7 @@ const CheckListItem = ({
           name='done'
           id='done'
           checked={item.done}
-          className='cursor-pointer'
+          className='cursor-pointer w-6 h-6'
           onChange={() => onToggleDone(item.documentId || '')}
         />
         <div
@@ -32,6 +32,7 @@ const CheckListItem = ({
         >
           {item.label}
         </div>
+
         {/* Only show for high priority */}
         {item.priority === 'high' && (
           <div className='px-4 border border-red-700 text-red-700 text-xs rounded'>
@@ -61,10 +62,12 @@ const CheckListItem = ({
               item.assignedTo.charAt(0).toUpperCase() +
               item.assignedTo.slice(1).toLowerCase()}
         </div>
+
         {/* Only show if the Due Date is there from the main page that uses this component */}
         {item.dueDate && (
           <div className='px-4'>{new Date(item.dueDate).toDateString()}</div>
         )}
+
         {/* Only show if the Quantity is there from the main page that uses this component */}
         {item.quantity && <div className='px-4'>{`Qty: ${item.quantity}`}</div>}
       </div>

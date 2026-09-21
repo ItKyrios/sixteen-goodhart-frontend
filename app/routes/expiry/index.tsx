@@ -1,14 +1,38 @@
+import type { Route } from './+types';
 import { Link, useLocation } from 'react-router';
-import Message from '~/components/Message';
 import useExpiry from '~/context/ExpiryContext';
+import Message from '~/components/Message';
+import { useEffect } from 'react';
+import type { ExpiryItem } from '~/types';
+import { getExpiries } from '~/services/expiry.server';
+import ExpiryOverviewForm from '~/components/expiry/ExpiryOverviewForm';
 
-const ExpiryPage = () => {
-  const { items } = useExpiry();
-  const location = useLocation();
-  const message = location.state?.message;
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: 'Sixteen Goodhart | Expiry' },
+    { name: 'description', content: 'A web app for home' },
+  ];
+}
 
-  const sortedExpiry = items.sort(
-    (a, b) =>
+export async function loader({
+  request,
+}: Route.LoaderArgs): Promise<{ expiryData: ExpiryItem[] }> {
+  const expiryData = await getExpiries();
+  return { expiryData };
+}
+
+const ExpiryPage = ({ loaderData }: Route.ComponentProps) => {
+  const { expiryData } = loaderData;
+  const { expiries, setExpiries } = useExpiry();
+  useEffect(() => {
+    setExpiries(expiryData);
+  }, [expiryData, setExpiries]);
+
+  const { search } = useLocation();
+  const message = new URLSearchParams(search).get('message');
+
+  const sortedExpiry = expiries.sort(
+    (a: ExpiryItem, b: ExpiryItem) =>
       new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
   );
 
@@ -27,40 +51,8 @@ const ExpiryPage = () => {
 
       <div className='flex flex-col gap-3'>
         {sortedExpiry.map((w) => (
-          <Link key={w.id} to={`/expiry/edit/${w.id}`}>
-            <div className='grid grid-cols-2 justify-between text-sm bg-gray-900 p-4 rounded-xs shadow-md hover:bg-gray-800 active:bg-gray-800'>
-              <div>
-                <div className='text-lg font-medium'>{w.name}</div>
-                <div>
-                  Model:{' '}
-                  <span className='text-xs text-gray-300 block'>{w.model}</span>
-                </div>
-                <div>Amount: ${w.amount.toFixed(2)}</div>
-                <div>
-                  Purchase Date:{' '}
-                  <span className='text-xs text-gray-300 block'>
-                    {new Date(w.purchaseDate).toDateString()}
-                  </span>
-                </div>
-                {w.expiryDate && (
-                  <div>
-                    Expiry Date:{' '}
-                    <span className='text-xs text-red-500 block'>
-                      {new Date(w.expiryDate).toDateString()}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  Notes:{' '}
-                  <span className='text-xs text-gray-300 block'>{w.notes}</span>
-                </div>
-              </div>
-              <img
-                src={w.photoUrl || `https://placehold.co/400?text=${w.name}`}
-                alt={w.name}
-                className='bg-gray-300 md:justify-self-end object-cover rounded-lg w-80 h-50 align-end'
-              />
-            </div>
+          <Link key={w.documentId} to={`/expiry/edit/${w.documentId}`}>
+            <ExpiryOverviewForm expiryItem={w} />
           </Link>
         ))}
       </div>

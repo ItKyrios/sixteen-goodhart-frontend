@@ -1,133 +1,63 @@
+import type { Route } from './+types';
 import type { TodoItem } from '~/types';
-import { useParams, Navigate, Link } from 'react-router';
-import { useState } from 'react';
-import useTodo from '~/context/TodoContext';
-import { generateId } from '~/utills/uuid';
+import { Link, Form, redirect } from 'react-router';
+import { getTodoByDocumentId, updateTodo } from '~/services/todo.server';
+import TodoForm from '~/components/todo/TodoForm';
 
-const TodoEditPage = () => {
-  const { id } = useParams();
-  const { items, updateTodo } = useTodo();
+type Params = { documentId: string };
 
-  const existing = items.find((i) => i.id === id);
+export async function loader({
+  params,
+}: Route.LoaderArgs & { params: Params }): Promise<{ todo: TodoItem }> {
+  const { documentId } = params;
+  const todo = await getTodoByDocumentId(documentId);
+  if (!todo) throw new Response('Todo not found', { status: 404 });
+  return { todo };
+}
 
-  const [form, setForm] = useState<TodoItem>(
-    existing || {
-      id: generateId(),
-      name: '',
-      assignedTo: '',
-      createdBy: 'loggedinUser',
-      category: '',
-      priority: 'low',
-      dueDate: '',
-      done: false,
-    },
-  );
+export async function action({
+  request,
+  params,
+}: Route.ActionArgs & { params: Params }) {
+  const { documentId } = params;
+  const form = await request.formData();
 
-  const [saved, setSaved] = useState(false);
-  const save = () => {
-    let updated: TodoItem[];
-
-    if (existing) {
-      updated = items.map((i) => (i.id === id ? form : i));
-    } else {
-      updated = [...items, form];
-    }
-    updateTodo(updated);
-    setSaved(true);
+  const updated = {
+    name: String(form.get('name')),
+    assignedTo: String(form.get('assignedTo')),
+    category: String(form.get('category')),
+    dueDate: String(form.get('dueDate')),
+    priority: String(form.get('priority')),
+    done: form.get('done') === 'on',
   };
 
-  if (saved) {
-    return (
-      <Navigate to='/todo' state={{ message: 'Todo item saved!' }} replace />
-    );
-  }
+  await updateTodo(documentId, updated);
+  return redirect('/todo?message=Todo item updated successfully!');
+}
 
-  const handleChange = <K extends keyof TodoItem>(
-    key: K,
-    value: TodoItem[K],
-  ) => {
-    setForm({ ...form, [key]: value });
-  };
+const TodoEditPage = ({ loaderData }: { loaderData: { todo: TodoItem } }) => {
+  const { todo } = loaderData;
 
   return (
     <div className='p-4 text-white'>
-      <h1 className='text-3xl font-bold text-white mb-2'>
-        {existing ? 'Edit Todo Item' : 'Add Todo Item'}
-      </h1>
+      <h1 className='text-3xl font-bold text-white mb-2'>Edit Todo Item</h1>
 
-      <div className='flex flex-col gap-3'>
-        <label htmlFor='name'>Item Name:</label>
-        <input
-          type='text'
-          name='name'
-          id='name'
-          value={form.name}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('name', e.target.value)}
-        />
-
-        <label htmlFor='assignedTo'>Assigned To:</label>
-        <input
-          type='text'
-          name='assignedTo'
-          id='assignedTo'
-          value={form.assignedTo}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('assignedTo', e.target.value)}
-        />
-
-        <label htmlFor='category'>Category:</label>
-        <input
-          type='text'
-          name='category'
-          id='category'
-          value={form.category}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('category', e.target.value)}
-        />
-
-        <label htmlFor='priority'>Priority:</label>
-        <select
-          name='priority'
-          id='priority'
-          value={form.priority}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) =>
-            handleChange(
-              'priority',
-              e.target.value as 'low' | 'medium' | 'high',
-            )
-          }
-        >
-          <option value='low'>Low</option>
-          <option value='medium'>Medium</option>
-          <option value='high'>HIgh</option>
-        </select>
-
-        <label htmlFor='dueDate'>Due Date:</label>
-        <input
-          type='date'
-          name='dueDate'
-          id='dueDate'
-          value={form.dueDate}
-          className='p-3 rounded-xs bg-gray-800'
-          onChange={(e) => handleChange('dueDate', e.target.value)}
-        />
+      <Form method='post' className='flex flex-col gap-3'>
+        <TodoForm todo={todo} />
 
         <label className='flex item-center gap-3'>
           <input
             type='checkbox'
             name='done'
             id='done'
-            checked={form.done}
-            onChange={(e) => handleChange('done', e.target.checked)}
+            defaultChecked={todo?.done ?? false}
           />
           Mark as done
         </label>
 
         <div className='flex gap-4 text-center justify-between'>
           <button
-            onClick={save}
+            type='submit'
             className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
           >
             Save
@@ -139,7 +69,7 @@ const TodoEditPage = () => {
             Cancel
           </Link>
         </div>
-      </div>
+      </Form>
     </div>
   );
 };

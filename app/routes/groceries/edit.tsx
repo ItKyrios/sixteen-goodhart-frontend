@@ -54,6 +54,15 @@ const GroceryEditPage = ({
       <Form method='post' className='flex flex-col gap-3'>
         <GroceryForm grocery={grocery} />
 
+        <label className='flex item-center gap-3'>
+          <input
+            type='checkbox'
+            name='done'
+            id='done'
+            defaultChecked={grocery?.done ?? false}
+          />
+          Mark as done
+        </label>
         <div className='flex gap-4 text-center justify-between'>
           <button
             type='submit'

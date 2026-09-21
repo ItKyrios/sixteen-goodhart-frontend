@@ -1,41 +1,27 @@
-import type { TodoItem } from '~/types';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
-import data from '~/data/todo.json';
+import type { StrapiTodo } from '~/types';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type TodoContextValue = {
-  items: TodoItem[];
-  updateTodo: (updated: TodoItem[]) => void;
+  todos: StrapiTodo[];
+  setTodos: React.Dispatch<React.SetStateAction<StrapiTodo[]>>;
+  updateLocalTodo: (item: StrapiTodo) => void;
 };
 
-const TodoContext = createContext<TodoContextValue | undefined>(undefined);
+const TodoContext = createContext<TodoContextValue | null>(null);
 
 export function TodoProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<TodoItem[]>([]);
+  const [todos, setTodos] = useState<StrapiTodo[]>([]);
 
-  // Load from localStorage AFTER hydration
-  useEffect(() => {
-    const saved = window.localStorage.getItem('todo');
-    if (saved) {
-      setItems(JSON.parse(saved));
-    } else {
-      setItems(data);
-    }
-  }, []);
-
-  const updateTodo = (updated: TodoItem[]) => {
-    setItems(updated);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('todo', JSON.stringify(updated));
-    }
+  const updateLocalTodo = (updatedItem: StrapiTodo) => {
+    setTodos((prev) =>
+      prev.map((item) =>
+        item.documentId === updatedItem.documentId ? updatedItem : item,
+      ),
+    );
   };
+
   return (
-    <TodoContext.Provider value={{ items, updateTodo }}>
+    <TodoContext.Provider value={{ todos, setTodos, updateLocalTodo }}>
       {children}
     </TodoContext.Provider>
   );

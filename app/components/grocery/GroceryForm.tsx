@@ -66,16 +66,6 @@ const GroceryForm = ({ grocery }: Props) => {
         <option value='medium'>Medium</option>
         <option value='high'>High</option>
       </select>
-
-      <label className='flex item-center gap-3'>
-        <input
-          type='checkbox'
-          name='done'
-          id='done'
-          defaultChecked={grocery?.done ?? false}
-        />
-        Mark as done
-      </label>
     </>
   );
 };

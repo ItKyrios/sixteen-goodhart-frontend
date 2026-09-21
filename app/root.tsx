@@ -13,6 +13,9 @@ import Header from './components/Header';
 import { GroceryProvider } from './context/GroceryContext';
 import { TodoProvider } from './context/TodoContext';
 import { ExpiryProvider } from './context/ExpiryContext';
+import { RentProvider } from './context/RentContext';
+import { WarrantyProvider } from './context/WarrantyContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -45,13 +48,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        <GroceryProvider>
-          <TodoProvider>
-            <ExpiryProvider>
-              <main>{children}</main>
-            </ExpiryProvider>
-          </TodoProvider>
-        </GroceryProvider>
+        <RentProvider>
+          <GroceryProvider>
+            <TodoProvider>
+              <ExpiryProvider>
+                <WarrantyProvider>
+                  <SubscriptionProvider>
+                    <main>{children}</main>
+                  </SubscriptionProvider>
+                </WarrantyProvider>
+              </ExpiryProvider>
+            </TodoProvider>
+          </GroceryProvider>
+        </RentProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

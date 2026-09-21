@@ -9,6 +9,7 @@ export type Rent = {
 };
 
 export type GroceryItem = {
+  id: string;
   documentId?: string;
   name: string;
   quantity: number;
@@ -20,9 +21,9 @@ export type GroceryItem = {
 
 export type TodoItem = {
   id: string;
+  documentId?: string;
   name: string;
   assignedTo: string;
-  createdBy: string;
   category: string;
   priority: string;
   dueDate: string;
@@ -31,36 +32,39 @@ export type TodoItem = {
 
 export type Subscription = {
   id: string;
+  documentId: string;
   name: string;
   amount: number;
-  cycle: 'weekly' | 'monthly' | 'yearly';
+  cycle: string;
   lastRenewed: string;
   nextRenewal: string;
-  paymentMethod: 'wise' | 'direct-debit' | 'cash' | 'other';
-  status: 'active' | 'inactive';
+  paymentMethod: string;
+  activeStatus: boolean;
   notes: string;
 };
 
 export type Warranty = {
   id: string;
+  documentId: string;
   name: string;
   model: string;
   amount: number;
   purchaseDate: string;
   warrantyEnd: string;
   notes: string;
-  photoUrl: string;
+  media: { url: string };
 };
 
 export type ExpiryItem = {
   id: string;
+  documentId: string;
   name: string;
   model: string;
   amount: number;
   purchaseDate: string;
   expiryDate: string;
   notes: string;
-  photoUrl: string;
+  media: { url: string };
 };
 
 export type CheckListItemBase = {
@@ -101,5 +105,16 @@ export type StrapiGrocery = {
   assignedTo: string;
   category: string;
   priority: string;
+  done: boolean;
+};
+
+export type StrapiTodo = {
+  id: string;
+  documentId: string;
+  name: string;
+  assignedTo: string;
+  category: string;
+  priority: string;
+  dueDate: string;
   done: boolean;
 };

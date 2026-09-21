@@ -18,26 +18,26 @@ const DoneCheckListItem = ({
 }: DoneCheckListItemProps) => {
   return (
     <div
-      key={item.id}
+      key={item.documentId}
       className='bg-gray-800 p-2 rounded-xs flex items-center gap-2'
     >
       <input
         type='checkbox'
         checked={item.done}
-        onChange={() => onToggleDone(item.id)}
+        onChange={() => onToggleDone(item.documentId || '')}
         className='scale-75'
       />
 
       <div className='text-sm line-through flex-1'>{item.label}</div>
 
       <Link
-        to={`${link}${item.id}`}
+        to={`${link}${item.documentId}`}
         className='border border-blue-500 text-blue-500 px-2 py-1 rounded text-xs'
       >
         <FaPencil />
       </Link>
       <button
-        onClick={() => onDeleteItem(item.id)}
+        onClick={() => onDeleteItem(item.documentId || '')}
         className='text-red-500 px-2 py-1 rounded text-xs cursor-pointer'
       >
         <IoTrashOutline />

@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type GroceryContextValue = {
   groceries: GroceryItem[];
-  setGroceries: (items: GroceryItem[]) => void;
+  setGroceries: React.Dispatch<React.SetStateAction<GroceryItem[]>>;
   updateLocalGrocery: (item: GroceryItem) => void;
 };
 
