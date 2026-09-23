@@ -35,7 +35,7 @@ const WarrantyOverviewForm = ({ warrantyItem: w }: Props) => {
       <img
         src={
           w?.media
-            ? `${import.meta.env.VITE_STRAPI_URL}${w?.media?.url ?? ''}`
+            ? `${w?.media?.url ?? ''}`
             : `https://placehold.co/400?text=${w?.name}`
         }
         alt={w?.name}
