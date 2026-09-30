@@ -7,14 +7,12 @@ type CheckListItemProps = {
   item: CheckListItemBase;
   link?: string;
   onToggleDone: (id: string) => void;
-  onDeleteItem: (id: string) => void;
 };
 
 const CheckListItem = ({
   item,
   link = 'edit/',
   onToggleDone,
-  onDeleteItem,
 }: CheckListItemProps) => {
   return (
     <div className='mb-2' key={item.documentId}>
@@ -48,7 +46,7 @@ const CheckListItem = ({
             <FaPencil className='inline text-xs' /> Edit
           </Link>
           <button
-            onClick={() => onDeleteItem(item.documentId || '')}
+            type='submit'
             className='text-red-600 rounded-xs ml-2 cursor-pointer'
           >
             <IoTrashOutline className='inline text-lg' />

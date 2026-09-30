@@ -1,11 +1,12 @@
 import type { Route } from './+types';
-import { Link, useLocation } from 'react-router';
+import { Link, redirect, useLocation } from 'react-router';
 import useExpiry from '~/context/ExpiryContext';
 import Message from '~/components/Message';
 import { useEffect } from 'react';
 import type { ExpiryItem } from '~/types';
 import { getExpiries } from '~/services/expiry.server';
 import ExpiryOverviewForm from '~/components/expiry/ExpiryOverviewForm';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -17,7 +18,10 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({
   request,
 }: Route.LoaderArgs): Promise<{ expiryData: ExpiryItem[] }> {
-  const expiryData = await getExpiries();
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
+  const expiryData = await getExpiries(jwt);
   return { expiryData };
 }
 
@@ -31,7 +35,7 @@ const ExpiryPage = ({ loaderData }: Route.ComponentProps) => {
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');
 
-  const sortedExpiry = expiries.sort(
+  const sortedExpiry = expiries?.sort(
     (a: ExpiryItem, b: ExpiryItem) =>
       new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
   );
@@ -40,7 +44,7 @@ const ExpiryPage = ({ loaderData }: Route.ComponentProps) => {
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2'>
         <h1 className='text-3xl font-bold text-white mb-2'>Expiry</h1>
-        <Link to='/expiry/edit/new'>
+        <Link to='/expiry/new'>
           <button className='bg-blue-600 p-2 mb-2 rounded-xs w-full hover:bg-blue-700 active:scale-95 transition-transform cursor-pointer'>
             Add New Item
           </button>
@@ -50,11 +54,17 @@ const ExpiryPage = ({ loaderData }: Route.ComponentProps) => {
       {message && <Message message={message} />}
 
       <div className='flex flex-col gap-3'>
-        {sortedExpiry.map((w) => (
-          <Link key={w.documentId} to={`/expiry/edit/${w.documentId}`}>
-            <ExpiryOverviewForm expiryItem={w} />
-          </Link>
-        ))}
+        {!sortedExpiry || sortedExpiry.length === 0 ? (
+          <p className='p-2 rounded-xs text-xs flex items-center gap-2 opacity-70'>
+            There are no expiry item to show
+          </p>
+        ) : (
+          sortedExpiry.map((w) => (
+            <Link key={w.documentId} to={`/expiry/edit/${w.documentId}`}>
+              <ExpiryOverviewForm expiryItem={w} />
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

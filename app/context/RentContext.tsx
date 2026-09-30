@@ -22,7 +22,7 @@ export function RentProvider({ children }: { children: ReactNode }) {
   };
 
   const calcDaysLeft = (rentItem: StrapiRent) => {
-    const due = new Date(rentItem.nextDueDate);
+    const due = new Date(rentItem?.nextDueDate);
     const now = new Date();
     const diff = due.getTime() - now.getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));

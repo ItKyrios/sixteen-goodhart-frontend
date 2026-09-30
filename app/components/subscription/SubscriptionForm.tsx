@@ -22,6 +22,7 @@ const SubscriptionForm = ({ sub }: Props) => {
         <span className='ml-auto pr-2'>$</span>
         <input
           type='number'
+          step='0.01'
           name='amount'
           id='amount'
           defaultValue={sub?.amount ?? 0}

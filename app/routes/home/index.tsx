@@ -32,6 +32,7 @@ import { getExpiries } from '~/services/expiry.server';
 import { getSubscriptions } from '~/services/subscription.server';
 import QuickAddForm from '~/components/QuickAddForm';
 import Message from '~/components/Message';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -49,16 +50,27 @@ export async function loader({ request }: Route.LoaderArgs): Promise<{
   expiryData: ExpiryItem[];
   subscriptionData: Subscription[];
 }> {
-  const rentData = await getRents();
-  const groceriesData = await getGroceries();
-  const todosData = await getTodos();
-  const warrantyData = await getWarranties();
-  const expiryData = await getExpiries();
-  const subscriptionData = await getSubscriptions();
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
-  const rent = rentData.rentData;
+  const [
+    rentData,
+    groceriesData,
+    todosData,
+    warrantyData,
+    expiryData,
+    subscriptionData,
+  ] = await Promise.all([
+    getRents(jwt),
+    getGroceries(jwt),
+    getTodos(jwt),
+    getWarranties(jwt),
+    getExpiries(jwt),
+    getSubscriptions(jwt),
+  ]);
+
   return {
-    rent,
+    rent: rentData,
     groceriesData,
     todosData,
     warrantyData,
@@ -68,6 +80,7 @@ export async function loader({ request }: Route.LoaderArgs): Promise<{
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const jwt = getJwtFromRequest(request);
   const form = await request.formData();
 
   const type = form.get('type'); //"grocery" or "todo"
@@ -78,25 +91,31 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (type === 'grocery') {
-    await createGrocery({
-      name,
-      quantity: 1,
-      assignedTo: 'You',
-      category: 'others',
-      priority: 'medium',
-      done: false,
-    });
+    await createGrocery(
+      {
+        name,
+        quantity: 1,
+        assignedTo: 'You',
+        category: 'others',
+        priority: 'medium',
+        done: false,
+      },
+      jwt || '',
+    );
   }
 
   if (type === 'todo') {
-    await createTodo({
-      name,
-      assignedTo: 'You',
-      category: '',
-      priority: 'medium',
-      dueDate: '',
-      done: false,
-    });
+    await createTodo(
+      {
+        name,
+        assignedTo: 'You',
+        category: '',
+        priority: 'medium',
+        dueDate: '',
+        done: false,
+      },
+      jwt || '',
+    );
   }
 
   return { ok: true };
@@ -153,14 +172,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const activeTodoItems = todoItems.filter((i) => !i.done);
   const currentDate = new Date();
   const sortedWarrantyFirstItem = warrantyData
-    .sort(
+    ?.sort(
       (a, b) =>
         new Date(a.warrantyEnd).getTime() - new Date(b.warrantyEnd).getTime(),
     )
     .at(0);
 
   const sortedExpiryFirstItem = expiryData
-    .sort(
+    ?.sort(
       (a, b) =>
         new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
     )
@@ -209,10 +228,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <fetcher.Form
-        method='post'
-        className='text-center py-10 bg-gray-900 text-white'
-      >
+      <fetcher.Form method='post'>
         <QuickAddForm fetcher={fetcher} />
       </fetcher.Form>
 

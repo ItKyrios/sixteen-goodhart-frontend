@@ -32,6 +32,7 @@ const ExpiryForm = ({ expiryItem: expiry }: Props) => {
         <span className='ml-auto pr-2'>$</span>
         <input
           type='number'
+          step='0.01'
           name='amount'
           id='amount'
           defaultValue={expiry?.amount ?? 0}

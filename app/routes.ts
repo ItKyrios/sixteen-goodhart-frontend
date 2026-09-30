@@ -17,6 +17,7 @@ export default [
     route('warranty/new', './routes/warranty/add.tsx'),
     route('warranty/edit/:documentId', './routes/warranty/edit.tsx'),
     route('expiry', './routes/expiry/index.tsx'),
+    route('expiry/new', './routes/expiry/add.tsx'),
     route('expiry/edit/:documentId', './routes/expiry/edit.tsx'),
     route('subscription', './routes/subscription/index.tsx'),
     route('subscription/new', './routes/subscription/add.tsx'),
@@ -24,5 +25,8 @@ export default [
     route('todo', './routes/todo/index.tsx'),
     route('todo/new', './routes/todo/add.tsx'),
     route('todo/edit/:documentId', './routes/todo/edit.tsx'),
+    route('login', './routes/login.tsx'),
+    route('logout', './routes/logout.tsx'),
+    route('register', './routes/register.tsx'),
   ]),
 ] satisfies RouteConfig;

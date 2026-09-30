@@ -2,20 +2,24 @@ import type { Route } from './+types';
 import { Form, Link, redirect } from 'react-router';
 import { createGrocery } from '~/services/grocery.server';
 import GroceryForm from '~/components/grocery/GroceryForm';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export async function action({ request }: Route.ActionArgs) {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
   const form = await request.formData();
 
   const newItem = {
     name: String(form.get('name')),
     quantity: Number(form.get('quantity')),
-    assignedTo: String(form.get('assginedTo')),
+    assignedTo: String(form.get('assignedTo')),
     category: String(form.get('category')),
     priority: String(form.get('priority')),
-    done: form.get('done') === 'on',
+    done: Boolean(form.get('done')),
   };
 
-  await createGrocery(newItem);
+  await createGrocery(newItem, jwt);
   return redirect('/groceries?message=Grocery item added successfully!');
 }
 

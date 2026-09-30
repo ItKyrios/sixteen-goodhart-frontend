@@ -1,10 +1,11 @@
 import type { Route } from './+types';
-import { Link, useLocation } from 'react-router';
+import { Link, redirect, useLocation } from 'react-router';
 import useSubscription from '~/context/SubscriptionContext';
 import Message from '~/components/Message';
 import { useEffect } from 'react';
 import type { Subscription } from '~/types';
 import { getSubscriptions } from '~/services/subscription.server';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,7 +17,10 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({
   request,
 }: Route.LoaderArgs): Promise<{ subscriptionData: Subscription[] }> {
-  const subscriptionData = await getSubscriptions();
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
+  const subscriptionData = await getSubscriptions(jwt);
   return { subscriptionData };
 }
 
@@ -46,22 +50,26 @@ const SubscriptionPage = ({ loaderData }: Route.ComponentProps) => {
       </div>
 
       <div className='flex flex-col gap-3'>
-        {sortedSubscriptions.map((sub) => (
-          <Link
-            key={sub.documentId}
-            to={`/subscription/edit/${sub.documentId}`}
-          >
-            <div className='bg-gray-900 p-4 rounded-xs shadow-md hover:bg-gray-800 active:bg-gray-800'>
-              <div className='text-lg font-medium'>{sub.name}</div>
-              <div>
-                ${Number(sub.amount).toFixed(2)} / {sub.cycle}
+        {!sortedSubscriptions || sortedSubscriptions.length === 0 ? (
+          <p className='p-2 rounded-xs text-xs flex item-center gap-2 opacity-70'></p>
+        ) : (
+          sortedSubscriptions.map((sub) => (
+            <Link
+              key={sub.documentId}
+              to={`/subscription/edit/${sub.documentId}`}
+            >
+              <div className='bg-gray-900 p-4 rounded-xs shadow-md hover:bg-gray-800 active:bg-gray-800'>
+                <div className='text-lg font-medium'>{sub.name}</div>
+                <div>
+                  ${Number(sub.amount).toFixed(2)} / {sub.cycle}
+                </div>
+                <div>Last: {sub.lastRenewed}</div>
+                <div>Next: {sub.nextRenewal}</div>
+                <div>Status: {sub.activeStatus ? 'Active' : 'Inactive'}</div>
               </div>
-              <div>Last: {sub.lastRenewed}</div>
-              <div>Next: {sub.nextRenewal}</div>
-              <div>Status: {sub.activeStatus ? 'Active' : 'Inactive'}</div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
         <Link to='/subscription/new'>
           <button className='bg-blue-600 p-3 rounded-xs w-full mt-4 active:scale-95 transition-transform cursor-pointer'>
             Add Subscription

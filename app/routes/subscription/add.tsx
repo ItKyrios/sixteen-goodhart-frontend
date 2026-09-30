@@ -2,21 +2,26 @@ import type { Route } from './+types';
 import { Form, Link, redirect } from 'react-router';
 import SubscriptionForm from '~/components/subscription/SubscriptionForm';
 import { createSubscription } from '~/services/subscription.server';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export async function action({ request }: Route.ActionArgs) {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
   const form = await request.formData();
 
   const newItem = {
     name: String(form.get('name')),
     amount: Number(form.get('amount')),
     cycle: String(form.get('cycle')),
-    lastRenewed: String(form.get('purchaseDate')),
-    nextRenewal: String(form.get('expiryDate')),
+    lastRenewed: String(form.get('lastRenewed')),
+    nextRenewal: String(form.get('nextRenewal')),
+    paymentMethod: String(form.get('paymentMethod')),
+    activeStatus: Boolean(form.get('activeStatus')),
     notes: String(form.get('notes')),
-    activeStatus: form.get('activeStatus') === 'on',
   };
 
-  await createSubscription(newItem);
+  await createSubscription(newItem, jwt);
   return redirect(
     '/subscription?message=Subscription item added successfully!',
   );

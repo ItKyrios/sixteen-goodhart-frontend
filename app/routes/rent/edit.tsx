@@ -1,24 +1,26 @@
 import type { Route } from './+types';
 import type { StrapiRent } from '~/types';
-import { Form, Link, redirect } from 'react-router';
+import { Form, redirect } from 'react-router';
 import RentForm from '~/components/rent/RentForm';
 import { getRentByDocumentId, updateRent } from '~/services/rent.server';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 // Route params for manual routing
 type Params = {
   documentId: string;
 };
 
-// Loader return type
-type LoaderData = {
-  rentData: StrapiRent;
-};
-
 // Loader: Fetch rent by documentId
 export async function loader({
   params,
-}: Route.LoaderArgs & { params: Params }): Promise<LoaderData> {
-  const rentData = await getRentByDocumentId(params.documentId);
+  request,
+}: Route.LoaderArgs & { params: Params }): Promise<{ rentData: StrapiRent }> {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
+  const { documentId } = params;
+  const rentData = await getRentByDocumentId(documentId, jwt);
+  if (!rentData) throw new Response('Rent item not found', { status: 404 });
   return { rentData };
 }
 
@@ -27,6 +29,9 @@ export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
+  const jwt = getJwtFromRequest(request);
+  if (!jwt) throw redirect('/login');
+
   const { documentId } = params;
   const form = await request.formData();
 
@@ -38,11 +43,15 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateRent(documentId, updatedRent);
+  await updateRent(documentId, updatedRent, jwt);
   return redirect(`/rent?message=Rent updated successfully!`);
 }
 
-const RentEditPage = ({ loaderData }: { loaderData: LoaderData }) => {
+const RentEditPage = ({
+  loaderData,
+}: {
+  loaderData: { rentData: StrapiRent };
+}) => {
   const { rentData } = loaderData;
 
   return (

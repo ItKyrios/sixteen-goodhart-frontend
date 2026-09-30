@@ -1,11 +1,12 @@
 import type { Route } from './+types';
 import type { StrapiRent } from '~/types';
 import Message from '~/components/Message';
-import { useLocation } from 'react-router';
+import { redirect, useLocation } from 'react-router';
 import { getRents } from '~/services/rent.server';
 import RentOverviewForm from '~/components/rent/RentOverviewForm';
 import useRent from '~/context/RentContext';
 import { useEffect } from 'react';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,13 +17,16 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({
   request,
-}: Route.LoaderArgs): Promise<StrapiRent[]> {
-  const rentData = await getRents();
-  return rentData.rentData;
+}: Route.LoaderArgs): Promise<{ rentData: StrapiRent[] }> {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
+  const rentData = await getRents(jwt);
+  return { rentData };
 }
 
 const RentPage = ({ loaderData }: Route.ComponentProps) => {
-  const rentData = loaderData;
+  const { rentData } = loaderData;
   const { rents: rent, setRents, calcDaysLeft } = useRent();
   useEffect(() => {
     setRents(rentData);
@@ -37,13 +41,14 @@ const RentPage = ({ loaderData }: Route.ComponentProps) => {
       <h1 className='text-3xl font-bold text-white mb-2'>Rent Overview</h1>
       {message && <Message message={message} />}
 
-      {rent.map((rentItem) => (
-        <RentOverviewForm
-          key={rentItem.documentId}
-          rentData={rentItem}
-          daysLeft={daysLeft}
-        />
-      ))}
+      {rent &&
+        rent.map((rentItem) => (
+          <RentOverviewForm
+            key={rentItem.documentId}
+            rentData={rentItem}
+            daysLeft={daysLeft}
+          />
+        ))}
     </div>
   );
 };

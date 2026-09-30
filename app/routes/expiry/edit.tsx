@@ -1,26 +1,47 @@
 import type { Route } from './+types';
 import type { ExpiryItem } from '~/types';
 import { Link, Form, redirect } from 'react-router';
-import { getExpiryByDocumentId, updateExpiry } from '~/services/expiry.server';
+import {
+  deleteExpiry,
+  getExpiryByDocumentId,
+  updateExpiry,
+} from '~/services/expiry.server';
 import ExpiryForm from '~/components/expiry/ExpiryForm';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
+// Route params for manual routing
 type Params = { documentId: string };
 
+// Loader: Fetch expiry by documentId
 export async function loader({
   params,
+  request,
 }: Route.LoaderArgs & { params: Params }): Promise<{ expiry: ExpiryItem }> {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
   const { documentId } = params;
-  const expiry = await getExpiryByDocumentId(documentId);
+  const expiry = await getExpiryByDocumentId(documentId, jwt);
   if (!expiry) throw new Response('Expiry item not found', { status: 404 });
   return { expiry };
 }
 
+// Action: Update expiry in Strapi
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
+  const jwt = getJwtFromRequest(request);
+  if (!jwt) throw redirect('/login');
+
   const { documentId } = params;
   const form = await request.formData();
+  const actionType = form.get('_action');
+
+  if (actionType === 'delete') {
+    await deleteExpiry(documentId, jwt);
+    return redirect('/expiry?message=Expiry item deleted successfully!');
+  }
 
   const updated = {
     name: String(form.get('name')),
@@ -31,7 +52,7 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateExpiry(documentId, updated);
+  await updateExpiry(documentId, updated, jwt);
   return redirect('/expiry?message=Expiry item updated successfully!');
 }
 
@@ -46,9 +67,15 @@ const ExpiryEditPage = ({
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>Edit Expiry</h1>
-        <button className='ml-auto bg-red-600 px-8 py-2 mb-2 rounded-full hover:bg-red-700 active:scale-95 transition-transform cursor-pointer'>
-          Delete
-        </button>
+        <Form method='post' className='ml-auto'>
+          <input type='hidden' name='_action' value='delete' />
+          <button
+            type='submit'
+            className='bg-red-600 px-8 py-2 mb-2 rounded-full hover:bg-red-700 active:scale-95 transition-transform cursor-pointer'
+          >
+            Delete
+          </button>
+        </Form>
       </div>
 
       <Form method='post' className='flex flex-col gap-3'>

@@ -7,14 +7,12 @@ type DoneCheckListItemProps = {
   item: CheckListItemBase;
   link?: string;
   onToggleDone: (id: string) => void;
-  onDeleteItem: (id: string) => void;
 };
 
 const DoneCheckListItem = ({
   item,
   link = 'edit/',
   onToggleDone,
-  onDeleteItem,
 }: DoneCheckListItemProps) => {
   return (
     <div
@@ -36,12 +34,6 @@ const DoneCheckListItem = ({
       >
         <FaPencil />
       </Link>
-      <button
-        onClick={() => onDeleteItem(item.documentId || '')}
-        className='text-red-500 px-2 py-1 rounded text-xs cursor-pointer'
-      >
-        <IoTrashOutline />
-      </button>
     </div>
   );
 };

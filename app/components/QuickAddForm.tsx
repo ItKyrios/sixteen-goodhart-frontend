@@ -13,12 +13,12 @@ const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
   }, [fetcher.state, fetcher.data]);
 
   return (
-    <>
+    <div className='text-center -mt-2 p-4 bg-gray-900 text-white'>
       <input
         type='text'
         name='name'
         placeholder='Type something...'
-        className='w-full p-3 rounded-xs bg-gray-800 text-white outline-none mb-3'
+        className='w-full p-3 bg-gray-800 rounded-xs outline-none mb-3'
         value={value}
         onChange={(e) => setValue(e.target.value)}
       />
@@ -47,7 +47,7 @@ const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
           </div>
         </button>
       </div>
-    </>
+    </div>
   );
 };
 

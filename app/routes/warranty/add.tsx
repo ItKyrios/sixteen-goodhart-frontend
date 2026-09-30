@@ -2,8 +2,12 @@ import type { Route } from './+types';
 import { Form, Link, redirect } from 'react-router';
 import { createWarranty } from '~/services/warranty.server';
 import WarrantyForm from '~/components/warranty/WarrantyForm';
+import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export async function action({ request }: Route.ActionArgs) {
+  const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
+
   const form = await request.formData();
 
   const newItem = {
@@ -15,7 +19,7 @@ export async function action({ request }: Route.ActionArgs) {
     notes: String(form.get('notes')),
   };
 
-  await createWarranty(newItem);
+  await createWarranty(newItem, jwt);
   return redirect('/warranty?message=Warranty item added successfully!');
 }
 
@@ -26,6 +30,7 @@ const WarrantyAddPage = () => {
 
       <Form method='post' className='flex flex-col gap-3'>
         <WarrantyForm />
+
         <div className='flex gap-4 text-center justify-between'>
           <button
             type='submit'
