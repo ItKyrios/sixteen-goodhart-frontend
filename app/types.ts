@@ -110,7 +110,7 @@ export type StrapiGrocery = {
 
 export type StrapiTodo = {
   id: string;
-  documentId: string;
+  documentId?: string;
   name: string;
   assignedTo: string;
   category: string;

@@ -90,11 +90,10 @@ const TodoPage = ({ loaderData }: Route.ComponentProps) => {
         ) : (
           <Form method='post'>
             {activeItems.map((item) => (
-              <>
+              <div key={item.documentId}>
                 <input type='hidden' name='_action' value='delete' />
                 <input type='hidden' name='_docId' value={item.documentId} />
                 <CheckListItem
-                  key={item.documentId}
                   item={{
                     documentId: item.documentId,
                     label: item.name,
@@ -105,7 +104,7 @@ const TodoPage = ({ loaderData }: Route.ComponentProps) => {
                   }}
                   onToggleDone={toggleDone}
                 />
-              </>
+              </div>
             ))}
           </Form>
         )}

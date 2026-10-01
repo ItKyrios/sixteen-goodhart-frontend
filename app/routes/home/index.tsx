@@ -109,9 +109,9 @@ export async function action({ request }: Route.ActionArgs) {
       {
         name,
         assignedTo: 'You',
-        category: '',
+        category: 'others',
         priority: 'medium',
-        dueDate: '',
+        dueDate: `${new Date().toLocaleDateString('en-CA')}`,
         done: false,
       },
       jwt || '',
@@ -135,6 +135,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   // Setting up rent data to global context
   const { calcDaysLeft } = useRent();
   const daysLeft = calcDaysLeft(rent[0]);
+  const daysLeftMessage = Number(daysLeft)
+    ? daysLeft == 0
+      ? 'Today'
+      : daysLeft == 1
+        ? 'Tomorrow'
+        : daysLeft > 1
+          ? daysLeft + ' days left'
+          : daysLeft + ' days overdue'
+    : 'No rent record';
 
   // Setting up groceries data to global context
   const { groceries: groceryItems, setGroceries } = useGrocery();
@@ -212,12 +221,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           ...prev,
           {
             id: '',
-            documentId: '',
             name,
             assignedTo: 'You',
-            category: '',
+            category: 'others',
             priority: 'medium',
-            dueDate: '',
+            dueDate: `${new Date().toLocaleDateString('en-CA')}`,
             done: false,
           },
         ]);
@@ -238,7 +246,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <Link to='/rent'>
           <Tile
             title='Rent'
-            value={`${daysLeft == 0 ? 'Today' : daysLeft == 1 ? 'Tomorrow' : daysLeft > 1 ? daysLeft + ' days left' : daysLeft + ' days overdue'}`}
+            value={daysLeftMessage}
             color='#4A90E2'
             icon={<FaMoneyBillWave />}
             urgency={daysLeft < 0 ? 'high' : ''}
@@ -256,40 +264,54 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <Link to='/warranty'>
           <Tile
             title='Warranty'
-            value={new Date(
-              sortedWarrantyFirstItem?.warrantyEnd || 0,
-            ).toDateString()}
+            value={
+              !sortedWarrantyFirstItem
+                ? 'No Warrant record'
+                : new Date(
+                    sortedWarrantyFirstItem?.warrantyEnd || 0,
+                  ).toDateString()
+            }
             color='#ab792a'
             icon={<FaClipboardCheck />}
             urgency={
-              new Date(sortedWarrantyFirstItem?.warrantyEnd || 0).getTime() <
-              new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth() + 1,
-                currentDate.getDate(),
-              ).getTime()
-                ? 'high'
-                : ''
+              !sortedWarrantyFirstItem
+                ? ''
+                : new Date(
+                      sortedWarrantyFirstItem?.warrantyEnd || 0,
+                    ).getTime() <
+                    new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth() + 1,
+                      currentDate.getDate(),
+                    ).getTime()
+                  ? 'high'
+                  : ''
             }
           />
         </Link>
         <Link to='/expiry'>
           <Tile
             title='Expiry'
-            value={new Date(
-              sortedExpiryFirstItem?.expiryDate || 0,
-            ).toDateString()}
+            value={
+              !sortedExpiryFirstItem
+                ? 'No Expiry record'
+                : new Date(
+                    sortedExpiryFirstItem?.expiryDate || 0,
+                  ).toDateString()
+            }
             color='#ab352a'
             icon={<FaClock />}
             urgency={
-              new Date(sortedExpiryFirstItem?.expiryDate || 0).getTime() <
-              new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate() + 4,
-              ).getTime()
-                ? 'high'
-                : ''
+              !sortedExpiryFirstItem
+                ? ''
+                : new Date(sortedExpiryFirstItem?.expiryDate || 0).getTime() <
+                    new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      currentDate.getDate() + 4,
+                    ).getTime()
+                  ? 'high'
+                  : ''
             }
           />
         </Link>

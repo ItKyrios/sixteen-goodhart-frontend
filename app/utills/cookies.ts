@@ -1,5 +1,7 @@
+const THIRTY_DAYS = 60 * 60 * 24 * 30;
+
 export function setJwtCookie(jwt: string) {
-  return `jwt=${jwt}; HttpOnly; Path=/; SameSite=Lax; Secure`;
+  return `jwt=${jwt}; HttpOnly; Path=/; SameSite=Lax; Secure; Max-Age=${THIRTY_DAYS}`;
 }
 
 export function getJwtFromRequest(request: Request) {
