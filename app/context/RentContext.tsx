@@ -1,19 +1,19 @@
-import type { StrapiRent } from '~/types';
+import type { Rent } from '~/types';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type RentContextValue = {
-  rents: StrapiRent[];
-  setRents: (items: StrapiRent[]) => void;
-  updateLocalRent: (item: StrapiRent) => void;
-  calcDaysLeft: (item: StrapiRent) => number;
+  rents: Rent[];
+  setRents: (items: Rent[]) => void;
+  updateLocalRent: (item: Rent) => void;
+  calcDaysLeft: (item: Rent) => number;
 };
 
 const RentContext = createContext<RentContextValue | null>(null);
 
 export function RentProvider({ children }: { children: ReactNode }) {
-  const [rents, setRents] = useState<StrapiRent[]>([]);
+  const [rents, setRents] = useState<Rent[]>([]);
 
-  const updateLocalRent = (updatedItem: StrapiRent) => {
+  const updateLocalRent = (updatedItem: Rent) => {
     setRents((prev) =>
       prev.map((item) =>
         item.documentId === updatedItem.documentId ? updatedItem : item,
@@ -21,7 +21,7 @@ export function RentProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const calcDaysLeft = (rentItem: StrapiRent) => {
+  const calcDaysLeft = (rentItem: Rent) => {
     const due = new Date(rentItem?.nextDueDate);
     const now = new Date();
     const diff = due.getTime() - now.getTime();

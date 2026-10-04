@@ -118,3 +118,9 @@ export type StrapiTodo = {
   dueDate: string;
   done: boolean;
 };
+
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+};

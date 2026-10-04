@@ -24,7 +24,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   };
 
   let totalMonthly = 0;
-  const calcTotalMonthly = subscriptions.map((s) => {
+  subscriptions.map((s) => {
     switch (s.cycle) {
       case 'daily':
         s.activeStatus && (totalMonthly += s.amount * 30);
