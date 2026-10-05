@@ -1,5 +1,5 @@
 import type { Route } from './+types';
-import { Form, Link, redirect, useFetcher, useLocation } from 'react-router';
+import { Link, redirect, useFetcher, useLocation } from 'react-router';
 import Message from '~/components/Message';
 import { deleteGrocery, updateGrocery } from '~/services/grocery.server';
 import { useEffect, useState } from 'react';
@@ -143,7 +143,7 @@ const GroceriesPage = () => {
             Your groceries list is empty
           </p>
         ) : (
-          <Form method='post'>
+          <fetcher.Form method='post'>
             {activeItems.map((item) => (
               <div key={item.documentId}>
                 <input type='hidden' name='_action' value='delete' />
@@ -162,7 +162,7 @@ const GroceriesPage = () => {
                 />
               </div>
             ))}
-          </Form>
+          </fetcher.Form>
         )}
       </div>
 

@@ -22,7 +22,7 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   // Background create
-  createGrocery(newItem, jwt);
+  createGrocery(newItem, jwt).catch((err) => console.error(err));
   return { ok: true, created: newItem };
 }
 
@@ -35,7 +35,7 @@ const GroceryAddPage = () => {
     if (fetcher.data?.created) {
       const newItem = fetcher.data.created;
 
-      // Updated AppContext immediately
+      // Update AppContext immediately
       setAppState((prev) => ({
         ...prev,
         groceries: [...prev.groceries, newItem],

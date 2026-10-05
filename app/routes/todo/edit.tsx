@@ -1,45 +1,37 @@
 import type { Route } from './+types';
-import type { TodoItem } from '~/types';
-import { Link, Form, redirect } from 'react-router';
-import {
-  deleteTodo,
-  getTodoByDocumentId,
-  updateTodo,
-} from '~/services/todo.server';
+import { Link, redirect, useFetcher, useParams, Navigate } from 'react-router';
+import { deleteTodo, updateTodo } from '~/services/todo.server';
 import TodoForm from '~/components/todo/TodoForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch todo by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{ todo: TodoItem }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const todo = await getTodoByDocumentId(documentId, jwt);
-  if (!todo) throw new Response('Todo not found', { status: 404 });
-  return { todo };
+  return null;
 }
 
-// Action: Update todo in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
   const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
   const { documentId } = params;
   const form = await request.formData();
   const actionType = form.get('_action');
 
   if (actionType === 'delete') {
-    await deleteTodo(documentId, jwt);
-    return redirect('/todo?message=Grocery item deleted successfully!');
+    // Background delete
+    deleteTodo(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: true };
   }
 
   const updated = {
@@ -51,18 +43,55 @@ export async function action({
     done: Boolean(form.get('done')),
   };
 
-  await updateTodo(documentId, updated, jwt);
-  return redirect('/todo?message=Todo item updated successfully!');
+  // Background update
+  updateTodo(documentId, updated, jwt).catch((err) => console.error(err));
+  return { ok: true, updated };
 }
 
-const TodoEditPage = ({ loaderData }: { loaderData: { todo: TodoItem } }) => {
-  const { todo } = loaderData;
+const TodoEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const todo = appState.todo.find((e) => e.documentId === documentId);
+
+  useEffect(() => {
+    // Update AppContext immediately when the fetcher completes
+    if (fetcher.data?.updated) {
+      const partial = fetcher.data.updated;
+
+      setAppState((prev) => ({
+        ...prev,
+        todo: prev.todo.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList('/todo?message=Todo item updated successfully!');
+    }
+
+    // Delete from AppContext
+    if (fetcher.data?.deleted) {
+      setAppState((prev) => ({
+        ...prev,
+        todo: prev.todo.filter((item) => item.documentId !== documentId),
+      }));
+
+      setRedirectToList('/todo?message=Todo item deleted successfully!');
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>Edit Todo Item</h1>
-        <Form method='post' className='ml-auto'>
+
+        <fetcher.Form method='post' className='ml-auto'>
           <input type='hidden' name='_action' value='delete' />
           <button
             type='submit'
@@ -70,10 +99,10 @@ const TodoEditPage = ({ loaderData }: { loaderData: { todo: TodoItem } }) => {
           >
             Delete
           </button>
-        </Form>
+        </fetcher.Form>
       </div>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <TodoForm todo={todo} />
 
         <label className='flex item-center gap-3'>
@@ -100,7 +129,7 @@ const TodoEditPage = ({ loaderData }: { loaderData: { todo: TodoItem } }) => {
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

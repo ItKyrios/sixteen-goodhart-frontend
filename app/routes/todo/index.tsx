@@ -1,13 +1,13 @@
 import type { Route } from './+types';
-import { Form, Link, redirect, useLocation } from 'react-router';
-import useTodo from '~/context/TodoContext';
+import { Link, redirect, useFetcher, useLocation } from 'react-router';
 import Message from '~/components/Message';
 import { useState, useEffect } from 'react';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
-import type { StrapiTodo } from '~/types';
-import { deleteTodo, getTodos } from '~/services/todo.server';
+import type { CheckListItemBase } from '~/types';
+import { deleteTodo, updateTodo } from '~/services/todo.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,18 +19,14 @@ export function meta({}: Route.MetaArgs) {
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch todo by documentId
-export async function loader({
-  request,
-}: Route.LoaderArgs): Promise<{ todosData: StrapiTodo[] }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const todosData = await getTodos(jwt);
-  return { todosData };
+  return null;
 }
 
-// Action: Update todo in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
 }: Route.ActionArgs & { params: Params }) {
@@ -39,34 +35,92 @@ export async function action({
 
   const form = await request.formData();
   const actionType = form.get('_action');
-  const documentId = String(form.get('_docId'));
+  const documentId = String(form.get('documentId'));
+
+  if (actionType === 'toggle') {
+    const done = form.get('done') === 'true';
+
+    // Background update
+    updateTodo(documentId, { done }, jwt).catch((err) => console.error(err));
+    return { ok: true, toggle: { documentId, done } };
+  }
 
   if (actionType === 'delete') {
-    await deleteTodo(documentId, jwt);
-    return redirect('/todo?message=Todo item deleted successfully!');
+    // Background delete
+    deleteTodo(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: documentId };
   }
+
+  return null;
 }
 
-const TodoPage = ({ loaderData }: Route.ComponentProps) => {
+const TodoPage = () => {
+  const fetcher = useFetcher();
   const [showDone, setShowDone] = useState(false);
-  const { todosData } = loaderData;
-  const { todos, setTodos } = useTodo();
-  useEffect(() => {
-    setTodos(todosData);
-  }, [todosData, setTodos]);
+  const { appState, setAppState } = useAppContext();
+
+  const todos = appState.todo;
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');
 
-  const toggleDone = (documentId: string) => {
-    const updated = todos?.map((item) =>
-      item.documentId === documentId ? { ...item, done: !item.done } : item,
+  const toggleDone = (item: CheckListItemBase) => {
+    fetcher.submit(
+      {
+        _action: 'toggle',
+        documentId: String(item.documentId),
+        done: (!item.done).toString(),
+      },
+      { method: 'post' },
     );
-    setTodos(updated);
+
+    // Optimistic update immediately
+    setAppState((prev) => ({
+      ...prev,
+      todo: prev.todo.map((t) =>
+        t.documentId === item.documentId ? { ...t, done: !item.done } : t,
+      ),
+    }));
+  };
+
+  const deleteItem = (documentId: string) => {
+    fetcher.submit(
+      { _action: 'delete', documentId: String(documentId) },
+      { method: 'post' },
+    );
+
+    // Optimistic delete
+    setAppState((prev) => ({
+      ...prev,
+      todo: prev.todo.filter((t) => t.documentId !== documentId),
+    }));
   };
 
   const activeItems = todos?.filter((i) => !i.done);
   const doneItems = todos?.filter((i) => i.done);
+
+  // Apply optimistic updates
+  useEffect(() => {
+    if (fetcher.data?.toggle) {
+      const { documentId, done } = fetcher.data.toggle;
+
+      setAppState((prev) => ({
+        ...prev,
+        todo: prev.todo.map((item) =>
+          item.documentId === documentId ? { ...item, done } : item,
+        ),
+      }));
+    }
+
+    if (fetcher.data?.deleted) {
+      const documentId = fetcher.data.deleted;
+
+      setAppState((prev) => ({
+        ...prev,
+        todo: prev.todo.filter((item) => item.documentId !== documentId),
+      }));
+    }
+  }, [fetcher.data]);
 
   return (
     <div className='p-4 text-white'>
@@ -88,14 +142,14 @@ const TodoPage = ({ loaderData }: Route.ComponentProps) => {
             Your todo list is empty
           </p>
         ) : (
-          <Form method='post'>
+          <fetcher.Form method='post'>
             {activeItems.map((item) => (
               <div key={item.documentId}>
                 <input type='hidden' name='_action' value='delete' />
                 <input type='hidden' name='_docId' value={item.documentId} />
                 <CheckListItem
                   item={{
-                    documentId: item.documentId,
+                    documentId: String(item.documentId),
                     label: item.name,
                     assignedTo: item.assignedTo,
                     dueDate: item.dueDate,
@@ -103,10 +157,11 @@ const TodoPage = ({ loaderData }: Route.ComponentProps) => {
                     priority: item.priority,
                   }}
                   onToggleDone={toggleDone}
+                  onDeleteItem={deleteItem}
                 />
               </div>
             ))}
-          </Form>
+          </fetcher.Form>
         )}
       </div>
 
@@ -131,7 +186,7 @@ const TodoPage = ({ loaderData }: Route.ComponentProps) => {
                 <DoneCheckListItem
                   key={item.documentId}
                   item={{
-                    documentId: item.documentId,
+                    documentId: String(item.documentId),
                     label: item.name,
                     done: item.done,
                   }}
