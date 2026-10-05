@@ -1,12 +1,11 @@
 import type { CheckListItemBase } from '~/types';
 import { Link } from 'react-router';
 import { FaPencil } from 'react-icons/fa6';
-import { IoTrashOutline } from 'react-icons/io5';
 
 type DoneCheckListItemProps = {
   item: CheckListItemBase;
   link?: string;
-  onToggleDone: (id: string) => void;
+  onToggleDone: (id: CheckListItemBase) => void;
 };
 
 const DoneCheckListItem = ({
@@ -22,7 +21,7 @@ const DoneCheckListItem = ({
       <input
         type='checkbox'
         checked={item.done}
-        onChange={() => onToggleDone(item.documentId || '')}
+        onChange={() => onToggleDone(item)}
         className='scale-75'
       />
 

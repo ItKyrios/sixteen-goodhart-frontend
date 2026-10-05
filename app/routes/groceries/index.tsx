@@ -1,13 +1,13 @@
 import type { Route } from './+types';
-import { Form, Link, redirect, useLocation } from 'react-router';
-import useGrocery from '~/context/GroceryContext';
+import { Form, Link, redirect, useFetcher, useLocation } from 'react-router';
 import Message from '~/components/Message';
-import type { GroceryItem } from '~/types';
-import { deleteGrocery, getGroceries } from '~/services/grocery.server';
+import { deleteGrocery, updateGrocery } from '~/services/grocery.server';
 import { useEffect, useState } from 'react';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import type { CheckListItemBase, GroceryItem } from '~/types';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,18 +18,14 @@ export function meta({}: Route.MetaArgs) {
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch grocery by documentId
-export async function loader({
-  request,
-}: Route.LoaderArgs): Promise<{ groceriesData: GroceryItem[] }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const groceriesData = await getGroceries(jwt);
-  return { groceriesData };
+  return null;
 }
 
-// Action: Update grocery in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
 }: Route.ActionArgs & { params: Params }) {
@@ -38,34 +34,94 @@ export async function action({
 
   const form = await request.formData();
   const actionType = form.get('_action');
-  const documentId = String(form.get('_docId'));
+  const documentId = String(form.get('documentId'));
+
+  if (actionType === 'toggle') {
+    const done = form.get('done') === 'true';
+
+    // Background update
+    updateGrocery(documentId, { done }, jwt).catch((err) => console.error(err));
+    return { ok: true, toggle: { documentId, done } };
+  }
 
   if (actionType === 'delete') {
-    await deleteGrocery(documentId, jwt);
-    return redirect('/groceries?message=Grocery item deleted successfully!');
+    // Background delete
+    deleteGrocery(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: documentId };
   }
+
+  return null;
 }
 
-const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
+const GroceriesPage = () => {
+  const fetcher = useFetcher();
   const [showDone, setShowDone] = useState(false);
-  const { groceriesData } = loaderData;
-  const { groceries, setGroceries } = useGrocery();
-  useEffect(() => {
-    setGroceries(groceriesData);
-  }, [groceriesData, setGroceries]);
+  const { appState, setAppState } = useAppContext();
+
+  const groceries = appState.groceries;
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');
 
-  const toggleDone = (documentId: string) => {
-    const updated = groceries?.map((item) =>
-      item.documentId === documentId ? { ...item, done: !item.done } : item,
+  const toggleDone = (item: CheckListItemBase) => {
+    fetcher.submit(
+      {
+        _action: 'toggle',
+        documentId: String(item.documentId),
+        done: (!item.done).toString(),
+      },
+      { method: 'post' },
     );
-    setGroceries(updated);
+
+    // Optimistic update immediately
+    setAppState((prev) => ({
+      ...prev,
+      groceries: prev.groceries.map((g) =>
+        g.documentId === item.documentId ? { ...g, done: !item.done } : g,
+      ),
+    }));
+  };
+
+  const deleteItem = (documentId: string) => {
+    fetcher.submit(
+      { _action: 'delete', documentId: String(documentId) },
+      { method: 'post' },
+    );
+
+    // Optimistic delete
+    setAppState((prev) => ({
+      ...prev,
+      groceries: prev.groceries.filter((g) => g.documentId !== documentId),
+    }));
   };
 
   const activeItems = groceries?.filter((i) => !i.done);
   const doneItems = groceries?.filter((i) => i.done);
+
+  // Apply optimistic updates
+  useEffect(() => {
+    if (fetcher.data?.toggle) {
+      const { documentId, done } = fetcher.data.toggle;
+
+      setAppState((prev) => ({
+        ...prev,
+        groceries: prev.groceries.map((item) =>
+          item.documentId === documentId ? { ...item, done } : item,
+        ),
+      }));
+    }
+
+    if (fetcher.data?.deleted) {
+      const documentId = fetcher.data.deleted;
+
+      setAppState((prev) => ({
+        ...prev,
+        groceries: prev.groceries.filter(
+          (item) => item.documentId !== documentId,
+        ),
+      }));
+    }
+  }, [fetcher.data]);
 
   return (
     <div className='p-4 text-white'>
@@ -94,7 +150,7 @@ const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
                 <input type='hidden' name='_docId' value={item.documentId} />
                 <CheckListItem
                   item={{
-                    documentId: item.documentId,
+                    documentId: String(item.documentId),
                     label: item.name,
                     assignedTo: item.assignedTo,
                     quantity: item.quantity || undefined,
@@ -102,6 +158,7 @@ const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
                     priority: item.priority,
                   }}
                   onToggleDone={toggleDone}
+                  onDeleteItem={deleteItem}
                 />
               </div>
             ))}
@@ -130,7 +187,7 @@ const GroceriesPage = ({ loaderData }: Route.ComponentProps) => {
                 <DoneCheckListItem
                   key={item.documentId}
                   item={{
-                    documentId: item.documentId,
+                    documentId: String(item.documentId),
                     label: item.name,
                     done: item.done,
                   }}

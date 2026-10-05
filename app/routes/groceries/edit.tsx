@@ -1,68 +1,96 @@
 import type { Route } from './+types';
-import type { GroceryItem } from '~/types';
-import { Link, Form, redirect } from 'react-router';
-import {
-  deleteGrocery,
-  getGroceryByDocumentId,
-  updateGrocery,
-} from '~/services/grocery.server';
+import { Link, redirect, useFetcher, useParams, Navigate } from 'react-router';
+import { deleteGrocery, updateGrocery } from '~/services/grocery.server';
 import GroceryForm from '~/components/grocery/GroceryForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch grocery by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{
-  grocery: GroceryItem;
-}> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const grocery = await getGroceryByDocumentId(documentId, jwt);
-  if (!grocery) throw new Response('Grocery not found', { status: 404 });
-  return { grocery };
+  return null;
 }
 
-// Action: Update grocery in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
   const jwt = getJwtFromRequest(request);
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
   const { documentId } = params;
   const form = await request.formData();
   const actionType = form.get('_action');
 
   if (actionType === 'delete') {
-    await deleteGrocery(documentId, jwt);
-    return redirect('/groceries?message=Grocery item deleted successfully!');
+    // Background delete
+    deleteGrocery(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: true };
   }
 
   const updated = {
     name: String(form.get('name')),
     quantity: Number(form.get('quantity')),
-    assignedTo: String(form.get('assginedTo')),
+    assignedTo: String(form.get('assignedTo')),
     category: String(form.get('category')),
     priority: String(form.get('priority')),
     done: Boolean(form.get('done')),
   };
 
-  await updateGrocery(documentId, updated, jwt);
-  return redirect('/groceries?message=Grocery item updated successfully!');
+  // Background update
+  updateGrocery(documentId, updated, jwt).catch((err) => console.error(err));
+  return { ok: true, updated };
 }
 
-const GroceryEditPage = ({
-  loaderData,
-}: {
-  loaderData: { grocery: GroceryItem };
-}) => {
-  const { grocery } = loaderData;
+const GroceryEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const grocery = appState.groceries.find((e) => e.documentId === documentId);
+
+  useEffect(() => {
+    // Update AppContext immediately when the fetcher completes
+    if (fetcher.data?.updated) {
+      const partial = fetcher.data.updated;
+
+      setAppState((prev) => ({
+        ...prev,
+        groceries: prev.groceries.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList(
+        '/groceries?message=Grocery item updated successfully!',
+      );
+    }
+
+    // Delete from AppContext
+    if (fetcher.data?.deleted) {
+      setAppState((prev) => ({
+        ...prev,
+        groceries: prev.groceries.filter(
+          (item) => item.documentId !== documentId,
+        ),
+      }));
+
+      setRedirectToList(
+        '/groceries?message=Grocery item deleted successfully!',
+      );
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
@@ -70,7 +98,8 @@ const GroceryEditPage = ({
         <h1 className='text-3xl font-bold text-white mb-2'>
           Edit Grocery Item
         </h1>
-        <Form method='post' className='ml-auto'>
+
+        <fetcher.Form method='post' className='ml-auto'>
           <input type='hidden' name='_action' value='delete' />
           <button
             type='submit'
@@ -78,10 +107,10 @@ const GroceryEditPage = ({
           >
             Delete
           </button>
-        </Form>
+        </fetcher.Form>
       </div>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <GroceryForm grocery={grocery} />
 
         <label className='flex item-center gap-3'>
@@ -107,7 +136,7 @@ const GroceryEditPage = ({
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

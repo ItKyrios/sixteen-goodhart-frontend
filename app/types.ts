@@ -68,7 +68,7 @@ export type ExpiryItem = {
 };
 
 export type CheckListItemBase = {
-  documentId?: string;
+  documentId: string;
   label: string; // name, task, title, etc.
   assignedTo?: string;
   quantity?: number; // optional for modules that don't use it

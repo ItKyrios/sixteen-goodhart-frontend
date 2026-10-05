@@ -6,13 +6,15 @@ import { IoTrashOutline } from 'react-icons/io5';
 type CheckListItemProps = {
   item: CheckListItemBase;
   link?: string;
-  onToggleDone: (id: string) => void;
+  onToggleDone: (item: CheckListItemBase) => void;
+  onDeleteItem: (id: string) => void;
 };
 
 const CheckListItem = ({
   item,
   link = 'edit/',
   onToggleDone,
+  onDeleteItem,
 }: CheckListItemProps) => {
   return (
     <div className='mb-2' key={item.documentId}>
@@ -23,7 +25,7 @@ const CheckListItem = ({
           id='done'
           checked={item.done}
           className='cursor-pointer w-6 h-6'
-          onChange={() => onToggleDone(item.documentId || '')}
+          onChange={() => onToggleDone(item)}
         />
         <div
           className={`max-w-40 md:max-w-100 font-semibold ${item.done ? 'line-through opacity-60' : ''}`}
@@ -46,7 +48,7 @@ const CheckListItem = ({
             <FaPencil className='inline text-xs' /> Edit
           </Link>
           <button
-            type='submit'
+            onClick={() => onDeleteItem(item.documentId || '')}
             className='text-red-600 rounded-xs ml-2 cursor-pointer'
           >
             <IoTrashOutline className='inline text-lg' />

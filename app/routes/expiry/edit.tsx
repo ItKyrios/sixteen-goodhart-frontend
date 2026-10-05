@@ -31,7 +31,7 @@ export async function action({
   if (actionType === 'delete') {
     // Background delete
     deleteExpiry(documentId, jwt).catch((err) => console.error(err));
-    return { od: true, deleted: true };
+    return { ok: true, deleted: true };
   }
 
   const updated = {
@@ -57,7 +57,7 @@ const ExpiryEditPage = () => {
   const expiry = appState.expiry.find((e) => e.documentId === documentId);
 
   useEffect(() => {
-    // Update AppContect immediately when the fetcher completes
+    // Update AppContext immediately when the fetcher completes
     if (fetcher.data?.updated) {
       const partial = fetcher.data.updated;
 
