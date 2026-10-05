@@ -1,48 +1,40 @@
 import type { Route } from './+types';
-import type { Warranty } from '~/types';
-import { Link, Form, redirect } from 'react-router';
-import {
-  deleteWarranty,
-  getWarrantyByDocumentId,
-  updateWarranty,
-} from '~/services/warranty.server';
+import { Link, redirect, useFetcher, useParams, Navigate } from 'react-router';
+import { deleteWarranty, updateWarranty } from '~/services/warranty.server';
 import WarrantyForm from '~/components/warranty/WarrantyForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch warranty by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{ warranty: Warranty }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const warranty = await getWarrantyByDocumentId(documentId, jwt);
-  if (!warranty) throw new Response('Waranty item not found', { status: 404 });
-  return { warranty };
+  return null;
 }
 
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
   const jwt = getJwtFromRequest(request);
-  if (!jwt) throw redirect('/login');
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
   const { documentId } = params;
   const form = await request.formData();
   const actionType = form.get('_action');
 
   if (actionType === 'delete') {
-    await deleteWarranty(documentId, jwt);
-    return redirect('/warranty?message=Warranty item deleted successfully');
+    // Background delete
+    deleteWarranty(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: true };
   }
 
-  const udpated = {
+  const updated = {
     name: String(form.get('name')),
     model: String(form.get('model')),
     amount: Number(form.get('amount')),
@@ -51,22 +43,61 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateWarranty(documentId, udpated, jwt);
-  return redirect('/warranty?message=Warranty item updated successfully!');
+  // Background update
+  updateWarranty(documentId, updated, jwt).catch((err) => console.error(err));
+  return { ok: true, updated };
 }
 
-const WarrantyEditPage = ({
-  loaderData,
-}: {
-  loaderData: { warranty: Warranty };
-}) => {
-  const { warranty } = loaderData;
+const WarrantyEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const warranty = appState.warranty.find((e) => e.documentId === documentId);
+
+  useEffect(() => {
+    // Updated AppContext immediately when the fetcher completes
+    if (fetcher.data?.updated) {
+      const partial = fetcher.data.updated;
+
+      setAppState((prev) => ({
+        ...prev,
+        warranty: prev.warranty.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList(
+        '/warranty?message=Warranty item updated successfully!',
+      );
+    }
+
+    // Delete from AppContext
+    if (fetcher.data?.deleted) {
+      setAppState((prev) => ({
+        ...prev,
+        warranty: prev.warranty.filter(
+          (item) => item.documentId !== documentId,
+        ),
+      }));
+
+      setRedirectToList(
+        '/warranty?message=Warranty item deleted successfully!',
+      );
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>Edit Warranty</h1>
-        <Form method='post' className='ml-auto'>
+
+        <fetcher.Form method='post' className='ml-auto'>
           <input type='hidden' name='_action' value='delete' />
           <button
             type='submit'
@@ -74,11 +105,12 @@ const WarrantyEditPage = ({
           >
             Delete
           </button>
-        </Form>
+        </fetcher.Form>
       </div>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <WarrantyForm warrantyItem={warranty} />
+
         <div className='flex gap-4 text-center justify-between'>
           <button
             type='submit'
@@ -93,7 +125,7 @@ const WarrantyEditPage = ({
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

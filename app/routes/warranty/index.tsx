@@ -1,12 +1,10 @@
 import type { Route } from './+types';
 import { Link, redirect, useLocation } from 'react-router';
-import useWarranty from '~/context/WarrantyContext';
 import Message from '~/components/Message';
-import { useEffect } from 'react';
 import type { Warranty } from '~/types';
-import { getWarranties } from '~/services/warranty.server';
 import WarrantyOverviewForm from '~/components/warranty/WarrantyOverviewForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -15,22 +13,16 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({
-  request,
-}: Route.LoaderArgs): Promise<{ warrantyData: Warranty[] }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const warrantyData = await getWarranties(jwt);
-  return { warrantyData };
+  return null;
 }
 
-const WarrantyPage = ({ loaderData }: Route.ComponentProps) => {
-  const { warrantyData } = loaderData;
-  const { warranties, setWarranties } = useWarranty();
-  useEffect(() => {
-    setWarranties(warrantyData);
-  }, [warrantyData, setWarranties]);
+const WarrantyPage = () => {
+  const { appState } = useAppContext();
+  const warranties = appState.warranty;
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');

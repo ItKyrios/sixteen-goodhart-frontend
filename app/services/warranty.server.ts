@@ -35,7 +35,7 @@ export async function getWarrantyByDocumentId(
 export async function updateWarranty(
   documentId: string,
   updated: Partial<Warranty>,
-  jwt: string,
+  jwt: string | null,
 ) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/warranties/${documentId}`,
@@ -68,7 +68,7 @@ export async function createWarranty(
 }
 
 // Delete warranty item
-export async function deleteWarranty(documentId: string, jwt: string) {
+export async function deleteWarranty(documentId: string, jwt: string | null) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/warranties/${documentId}`,
     {

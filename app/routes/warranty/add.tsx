@@ -1,8 +1,10 @@
 import type { Route } from './+types';
-import { Form, Link, redirect } from 'react-router';
+import { Form, Link, Navigate, redirect, useFetcher } from 'react-router';
 import { createWarranty } from '~/services/warranty.server';
 import WarrantyForm from '~/components/warranty/WarrantyForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 export async function action({ request }: Route.ActionArgs) {
   const jwt = getJwtFromRequest(request);
@@ -19,16 +21,46 @@ export async function action({ request }: Route.ActionArgs) {
     notes: String(form.get('notes')),
   };
 
-  await createWarranty(newItem, jwt);
-  return redirect('/warranty?message=Warranty item added successfully!');
+  // Background create
+  createWarranty(newItem, jwt).catch((err) => console.error(err));
+  return { ok: true, created: newItem };
 }
 
 const WarrantyAddPage = () => {
+  const fetcher = useFetcher();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (fetcher.data?.created) {
+      const tempId = `temp-${Date.now()}`;
+
+      const newItem = {
+        documentId: tempId,
+        id: tempId,
+        ...fetcher.data.created,
+      };
+
+      // Update AppContext immediately
+      setAppState((prev) => ({
+        ...prev,
+        warranty: [...prev.warranty, newItem],
+      }));
+
+      // Redirect instantly
+      setRedirectToList('/warranty?message=Warranty item added successfully!');
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
+
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Add Warranty Item</h1>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <WarrantyForm />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -45,7 +77,7 @@ const WarrantyAddPage = () => {
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

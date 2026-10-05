@@ -33,7 +33,13 @@ const GroceryAddPage = () => {
 
   useEffect(() => {
     if (fetcher.data?.created) {
-      const newItem = fetcher.data.created;
+      const tempId = `temp-${Date.now()}`;
+
+      const newItem = {
+        documentId: tempId,
+        id: tempId,
+        ...fetcher.data.created,
+      };
 
       // Update AppContext immediately
       setAppState((prev) => ({

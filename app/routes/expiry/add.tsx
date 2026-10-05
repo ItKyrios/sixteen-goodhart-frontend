@@ -22,7 +22,7 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   // Background create
-  createExpiry(newItem, jwt);
+  createExpiry(newItem, jwt).catch((err) => console.error(err));
   return { ok: true, created: newItem };
 }
 

@@ -10,9 +10,6 @@ import {
 import type { Route } from './+types/root';
 import './app.css';
 import Header from './components/Header';
-import { GroceryProvider } from './context/GroceryContext';
-import { TodoProvider } from './context/TodoContext';
-import { ExpiryProvider } from './context/ExpiryContext';
 import { RentProvider } from './context/RentContext';
 import { WarrantyProvider } from './context/WarrantyContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
@@ -51,15 +48,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Header />
         <AppProvider>
           <RentProvider>
-            <GroceryProvider>
-              <TodoProvider>
-                <WarrantyProvider>
-                  <SubscriptionProvider>
-                    <main>{children}</main>
-                  </SubscriptionProvider>
-                </WarrantyProvider>
-              </TodoProvider>
-            </GroceryProvider>
+            <SubscriptionProvider>
+              <main>{children}</main>
+            </SubscriptionProvider>
           </RentProvider>
         </AppProvider>
         <ScrollRestoration />
