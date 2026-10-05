@@ -1,11 +1,9 @@
 import type { Route } from './+types';
 import { Link, redirect, useLocation } from 'react-router';
-import useExpiry from '~/context/ExpiryContext';
 import Message from '~/components/Message';
-import { useEffect } from 'react';
 import type { ExpiryItem } from '~/types';
-import { getExpiries } from '~/services/expiry.server';
 import ExpiryOverviewForm from '~/components/expiry/ExpiryOverviewForm';
+import { useAppContext } from '~/context/AppContext';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 
 export function meta({}: Route.MetaArgs) {
@@ -15,22 +13,16 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({
-  request,
-}: Route.LoaderArgs): Promise<{ expiryData: ExpiryItem[] }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const expiryData = await getExpiries(jwt);
-  return { expiryData };
+  return null;
 }
 
-const ExpiryPage = ({ loaderData }: Route.ComponentProps) => {
-  const { expiryData } = loaderData;
-  const { expiries, setExpiries } = useExpiry();
-  useEffect(() => {
-    setExpiries(expiryData);
-  }, [expiryData, setExpiries]);
+const ExpiryPage = () => {
+  const { appState } = useAppContext();
+  const expiries = appState.expiry;
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');

@@ -53,13 +53,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <RentProvider>
             <GroceryProvider>
               <TodoProvider>
-                <ExpiryProvider>
-                  <WarrantyProvider>
-                    <SubscriptionProvider>
-                      <main>{children}</main>
-                    </SubscriptionProvider>
-                  </WarrantyProvider>
-                </ExpiryProvider>
+                <WarrantyProvider>
+                  <SubscriptionProvider>
+                    <main>{children}</main>
+                  </SubscriptionProvider>
+                </WarrantyProvider>
               </TodoProvider>
             </GroceryProvider>
           </RentProvider>

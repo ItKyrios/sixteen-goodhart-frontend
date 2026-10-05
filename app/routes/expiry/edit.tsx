@@ -1,46 +1,37 @@
 import type { Route } from './+types';
-import type { ExpiryItem } from '~/types';
-import { Link, Form, redirect } from 'react-router';
-import {
-  deleteExpiry,
-  getExpiryByDocumentId,
-  updateExpiry,
-} from '~/services/expiry.server';
+import { Link, redirect, useParams, useFetcher, Navigate } from 'react-router';
+import { deleteExpiry, updateExpiry } from '~/services/expiry.server';
 import ExpiryForm from '~/components/expiry/ExpiryForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch expiry by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{ expiry: ExpiryItem }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const expiry = await getExpiryByDocumentId(documentId, jwt);
-  if (!expiry) throw new Response('Expiry item not found', { status: 404 });
-  return { expiry };
+  return null;
 }
 
-// Action: Update expiry in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
   const jwt = getJwtFromRequest(request);
-  if (!jwt) throw redirect('/login');
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
   const { documentId } = params;
   const form = await request.formData();
   const actionType = form.get('_action');
 
   if (actionType === 'delete') {
-    await deleteExpiry(documentId, jwt);
-    return redirect('/expiry?message=Expiry item deleted successfully!');
+    // Background delete
+    deleteExpiry(documentId, jwt).catch((err) => console.error(err));
+    return { od: true, deleted: true };
   }
 
   const updated = {
@@ -52,22 +43,55 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateExpiry(documentId, updated, jwt);
-  return redirect('/expiry?message=Expiry item updated successfully!');
+  // Background update
+  updateExpiry(documentId, updated, jwt).catch((err) => console.error(err));
+  return { ok: true, updated };
 }
 
-const ExpiryEditPage = ({
-  loaderData,
-}: {
-  loaderData: { expiry: ExpiryItem };
-}) => {
-  const { expiry } = loaderData;
+const ExpiryEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const expiry = appState.expiry.find((e) => e.documentId === documentId);
+
+  useEffect(() => {
+    // Update AppContect immediately when the fetcher completes
+    if (fetcher.data?.updated) {
+      const partial = fetcher.data.updated;
+
+      setAppState((prev) => ({
+        ...prev,
+        expiry: prev.expiry.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList('/expiry?message=Expiry item updated successfully!');
+    }
+
+    // Delete from AppContext
+    if (fetcher.data?.deleted) {
+      setAppState((prev) => ({
+        ...prev,
+        expiry: prev.expiry.filter((item) => item.documentId !== documentId),
+      }));
+
+      setRedirectToList('/expiry?message=Expiry item deleted successfully!');
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
       <div className='grid grid-cols-2 items-center'>
         <h1 className='text-3xl font-bold text-white mb-2'>Edit Expiry</h1>
-        <Form method='post' className='ml-auto'>
+
+        <fetcher.Form method='post' className='ml-auto'>
           <input type='hidden' name='_action' value='delete' />
           <button
             type='submit'
@@ -75,10 +99,10 @@ const ExpiryEditPage = ({
           >
             Delete
           </button>
-        </Form>
+        </fetcher.Form>
       </div>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <ExpiryForm expiryItem={expiry} />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -95,7 +119,7 @@ const ExpiryEditPage = ({
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

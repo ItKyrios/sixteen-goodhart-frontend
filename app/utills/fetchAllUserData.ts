@@ -14,7 +14,7 @@ import { getExpiries } from '~/services/expiry.server';
 import { getSubscriptions } from '~/services/subscription.server';
 
 const fetchAllUserData = async (
-  jwt: string,
+  jwt: string | null,
 ): Promise<{
   rentData: Rent[];
   groceriesData: GroceryItem[];

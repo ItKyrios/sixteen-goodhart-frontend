@@ -35,7 +35,7 @@ export async function getExpiryByDocumentId(
 export async function updateExpiry(
   documentId: string,
   updated: Partial<ExpiryItem>,
-  jwt: string,
+  jwt: string | null,
 ) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/expiries/${documentId}`,
@@ -68,7 +68,7 @@ export async function createExpiry(
 }
 
 // Delete expiry item
-export async function deleteExpiry(documentId: string, jwt: string) {
+export async function deleteExpiry(documentId: string, jwt: string | null) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/expiries/${documentId}`,
     {

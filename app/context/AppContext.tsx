@@ -7,7 +7,7 @@ import type {
   Warranty,
   User,
 } from '~/types';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 export interface AppState {
   expiry: ExpiryItem[];
@@ -40,6 +40,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     user: null,
     loaded: false,
   });
+
+  // ⭐ 1. Load persisted state on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('appState');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Ensure loaded flag is false so Home can hydrate fresh data after login
+      setAppState({
+        ...parsed,
+        loaded: parsed.loaded ?? false,
+      });
+    }
+  }, []);
+
+  // ⭐ 2. Persist state whenever it changes (after hydration)
+  useEffect(() => {
+    if (appState.loaded) {
+      localStorage.setItem('appState', JSON.stringify(appState));
+    }
+  }, [appState]);
 
   //   Calculate total days left for rent tile in home page
   const calcDaysLeft = (rentItem: Rent) => {
