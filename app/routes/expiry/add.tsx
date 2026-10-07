@@ -1,10 +1,8 @@
 import type { Route } from './+types';
-import { Link, Navigate, redirect, useFetcher } from 'react-router';
+import { Form, Link, redirect } from 'react-router';
 import { createExpiry } from '~/services/expiry.server';
 import ExpiryForm from '~/components/expiry/ExpiryForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
-import { useAppContext } from '~/context/AppContext';
-import { useEffect, useState } from 'react';
 
 export async function action({ request }: Route.ActionArgs) {
   const jwt = getJwtFromRequest(request);
@@ -21,46 +19,16 @@ export async function action({ request }: Route.ActionArgs) {
     notes: String(form.get('notes')),
   };
 
-  // Background create
-  createExpiry(newItem, jwt).catch((err) => console.error(err));
-  return { ok: true, created: newItem };
+  await createExpiry(newItem, jwt);
+  return redirect('/expiry?message=Expiry item added successfully!&refresh=1');
 }
 
 const ExpiryAddPage = () => {
-  const fetcher = useFetcher();
-  const { setAppState } = useAppContext();
-  const [redirectToList, setRedirectToList] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (fetcher.data?.created) {
-      const tempId = `temp-${Date.now()}`;
-
-      const newItem = {
-        documentId: tempId,
-        id: tempId,
-        ...fetcher.data.created,
-      };
-
-      // Update AppContext immediately
-      setAppState((prev) => ({
-        ...prev,
-        expiry: [...prev.expiry, newItem],
-      }));
-
-      // Redirect instantly
-      setRedirectToList('/expiry?message=Expiry item added successfully!');
-    }
-  }, [fetcher.data]);
-
-  if (redirectToList) {
-    return <Navigate to={redirectToList} replace />;
-  }
-
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Add Expiry Item</h1>
 
-      <fetcher.Form method='post' className='flex flex-col gap-3'>
+      <Form method='post' className='flex flex-col gap-3'>
         <ExpiryForm />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -77,7 +45,7 @@ const ExpiryAddPage = () => {
             Cancel
           </Link>
         </div>
-      </fetcher.Form>
+      </Form>
     </div>
   );
 };

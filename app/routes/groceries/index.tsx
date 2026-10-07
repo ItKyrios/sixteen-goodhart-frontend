@@ -1,7 +1,17 @@
 import type { Route } from './+types';
-import { Link, redirect, useFetcher, useLocation } from 'react-router';
+import {
+  Link,
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useLocation,
+} from 'react-router';
 import Message from '~/components/Message';
-import { deleteGrocery, updateGrocery } from '~/services/grocery.server';
+import {
+  deleteGrocery,
+  getGroceries,
+  updateGrocery,
+} from '~/services/grocery.server';
 import { useEffect, useState } from 'react';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
@@ -18,11 +28,21 @@ export function meta({}: Route.MetaArgs) {
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: ONLY checks if the user is logged in, else redirect, return null.
+// Loader: Check if user is logged in else redirect and fetch data if redirected from add page
 export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const shouldRefresh = url.searchParams.get('refresh') === '1';
+
+  if (!shouldRefresh) {
+    // No SSR fetch needed
+    return null;
+  }
+
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-  return null;
+
+  const groceryData = await getGroceries(jwt);
+  return groceryData;
 }
 
 // Action: ONLY update Strapi (no AppContext here)
@@ -55,8 +75,19 @@ export async function action({
 
 const GroceriesPage = () => {
   const fetcher = useFetcher();
+  const loaderData = useLoaderData<typeof loader>();
   const [showDone, setShowDone] = useState(false);
   const { appState, setAppState } = useAppContext();
+
+  useEffect(() => {
+    if (loaderData) {
+      // SSR hydration ONLY after create
+      setAppState((prev) => ({
+        ...prev,
+        groceries: loaderData,
+      }));
+    }
+  }, [loaderData]);
 
   const groceries = appState.groceries;
 

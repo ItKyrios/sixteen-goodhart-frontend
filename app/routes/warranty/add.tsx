@@ -21,9 +21,10 @@ export async function action({ request }: Route.ActionArgs) {
     notes: String(form.get('notes')),
   };
 
-  // Background create
-  createWarranty(newItem, jwt).catch((err) => console.error(err));
-  return { ok: true, created: newItem };
+  await createWarranty(newItem, jwt);
+  return redirect(
+    '/warranty?message=Warranty item added successfully!&refresh=1',
+  );
 }
 
 const WarrantyAddPage = () => {
@@ -60,7 +61,7 @@ const WarrantyAddPage = () => {
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Add Warranty Item</h1>
 
-      <fetcher.Form method='post' className='flex flex-col gap-3'>
+      <Form method='post' className='flex flex-col gap-3'>
         <WarrantyForm />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -77,7 +78,7 @@ const WarrantyAddPage = () => {
             Cancel
           </Link>
         </div>
-      </fetcher.Form>
+      </Form>
     </div>
   );
 };

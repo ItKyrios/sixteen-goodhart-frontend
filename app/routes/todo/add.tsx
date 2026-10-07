@@ -1,5 +1,5 @@
 import type { Route } from './+types';
-import { Link, Navigate, redirect, useFetcher } from 'react-router';
+import { Form, Link, Navigate, redirect, useFetcher } from 'react-router';
 import { createTodo } from '~/services/todo.server';
 import TodoForm from '~/components/todo/TodoForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
@@ -21,9 +21,8 @@ export async function action({ request }: Route.ActionArgs) {
     done: Boolean(form.get('done')),
   };
 
-  // Background create
-  createTodo(newItem, jwt).catch((err) => console.error(err));
-  return { ok: true, created: newItem };
+  await createTodo(newItem, jwt);
+  return redirect('/todo?message=Todo item added successfully!&refresh=1');
 }
 
 const TodoAddPage = () => {
@@ -60,7 +59,7 @@ const TodoAddPage = () => {
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Add Todo Item</h1>
 
-      <fetcher.Form method='post' className='flex flex-col gap-3'>
+      <Form method='post' className='flex flex-col gap-3'>
         <TodoForm />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -77,7 +76,7 @@ const TodoAddPage = () => {
             Cancel
           </Link>
         </div>
-      </fetcher.Form>
+      </Form>
     </div>
   );
 };

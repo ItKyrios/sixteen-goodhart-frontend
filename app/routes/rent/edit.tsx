@@ -1,36 +1,30 @@
 import type { Route } from './+types';
-import type { StrapiRent } from '~/types';
-import { Form, redirect } from 'react-router';
+import { Link, Navigate, redirect, useFetcher, useParams } from 'react-router';
 import RentForm from '~/components/rent/RentForm';
-import { getRentByDocumentId, updateRent } from '~/services/rent.server';
+import { updateRent } from '~/services/rent.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = {
   documentId: string;
 };
 
-// Loader: Fetch rent by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{ rentData: StrapiRent }> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const rentData = await getRentByDocumentId(documentId, jwt);
-  if (!rentData) throw new Response('Rent item not found', { status: 404 });
-  return { rentData };
+  return null;
 }
 
-// Action: Update rent in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
 }: Route.ActionArgs & { params: Params }) {
   const jwt = getJwtFromRequest(request);
-  if (!jwt) throw redirect('/login');
+  if (isJwtExpired(jwt)) throw redirect('/login');
 
   const { documentId } = params;
   const form = await request.formData();
@@ -43,28 +37,64 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateRent(documentId, updatedRent, jwt);
-  return redirect(`/rent?message=Rent updated successfully!`);
+  // Background update
+  updateRent(documentId, updatedRent, jwt).catch((err) => console.error(err));
+  return { ok: true, updatedRent };
 }
 
-const RentEditPage = ({
-  loaderData,
-}: {
-  loaderData: { rentData: StrapiRent };
-}) => {
-  const { rentData } = loaderData;
+const RentEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const rentData = appState.rent.find((e) => e.documentId === documentId);
+
+  useEffect(() => {
+    // Update AppContect immediately when the fetcher completes
+    if (fetcher.data?.updatedRent) {
+      const partial = fetcher.data.updatedRent;
+
+      setAppState((prev) => ({
+        ...prev,
+        rent: prev.rent.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList('/rent?message=Rent updated successfully!');
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Edit Rent</h1>
 
-      <Form
+      <fetcher.Form
         method='post'
         className='flex flex-col gap-3 bg-gray-900 p-4 rounded-xs shadow-md-mb-4'
       >
         {/* Component: Edit Rent Form */}
         <RentForm rentData={rentData} />
-      </Form>
+        <div className='flex gap-4 text-center justify-between'>
+          <button
+            type='submit'
+            className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
+          >
+            Save
+          </button>
+          <Link
+            to='/rent'
+            className='mt-4 w-full text-red-500 border-2 border-red-600 p-3 rounded-xs active:scale-95 transition-transform'
+          >
+            Cancel
+          </Link>
+        </div>
+      </fetcher.Form>
     </div>
   );
 };

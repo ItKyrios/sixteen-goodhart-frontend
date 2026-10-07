@@ -34,7 +34,7 @@ const ExpiryOverviewForm = ({ expiryItem: w }: Props) => {
       </div>
       <img
         src={
-          w?.media
+          w?.media?.url
             ? `${w?.media?.url}`
             : `https://placehold.co/400?text=${w?.name}`
         }

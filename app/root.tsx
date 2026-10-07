@@ -47,11 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <Header />
         <AppProvider>
-          <RentProvider>
-            <SubscriptionProvider>
-              <main>{children}</main>
-            </SubscriptionProvider>
-          </RentProvider>
+          <main>{children}</main>
         </AppProvider>
         <ScrollRestoration />
         <Scripts />

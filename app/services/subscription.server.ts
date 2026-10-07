@@ -8,11 +8,14 @@ import type {
 export async function getSubscriptions(
   jwt: string | null,
 ): Promise<Subscription[]> {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/subscriptions`, {
-    headers: {
-      Authorization: `Bearer ${jwt}`,
+  const res = await fetch(
+    `${import.meta.env.VITE_API_URL}/subscriptions?populate=*`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
     },
-  });
+  );
   const json: StrapiResponse<Subscription> = await res.json();
   return json.data;
 }
@@ -72,11 +75,17 @@ export async function createSubscription(
 }
 
 // Delete subscription item
-export async function deleteSubscription(documentId: string) {
+export async function deleteSubscription(
+  documentId: string,
+  jwt: string | null,
+) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/subscriptions/${documentId}`,
     {
       method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
     },
   );
   return res.json();

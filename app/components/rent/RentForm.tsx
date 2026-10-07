@@ -1,7 +1,6 @@
-import { Link } from 'react-router';
 import type { StrapiRent } from '~/types';
 
-const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
+const RentForm = ({ rentData }: { rentData?: StrapiRent }) => {
   return (
     <>
       <div className='grid grid-cols-4 justify-between'>
@@ -11,7 +10,7 @@ const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
           type='number'
           name='amount'
           id='amount'
-          defaultValue={rentData.amount}
+          defaultValue={rentData?.amount ?? 0}
           className='col-span-2 bg-gray-400 px-4 text-gray-900'
         />
       </div>
@@ -21,7 +20,7 @@ const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
           type='date'
           name='lastPaidDate'
           id='lastPaidDate'
-          defaultValue={rentData.lastPaidDate}
+          defaultValue={rentData?.lastPaidDate ?? ''}
           className='bg-gray-400 px-4 text-gray-900'
         />
       </div>
@@ -31,7 +30,7 @@ const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
           type='date'
           name='nextDueDate'
           id='nextDueDate'
-          defaultValue={rentData.nextDueDate}
+          defaultValue={rentData?.nextDueDate ?? ''}
           className='bg-gray-400 px-4 text-gray-900'
         />
       </div>
@@ -40,7 +39,7 @@ const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
         <select
           name='paymentMethod'
           id='paymentMethod'
-          defaultValue={rentData.paymentMethod}
+          defaultValue={rentData?.paymentMethod ?? 'other'}
           className='bg-gray-400 px-4 text-gray-900'
         >
           <option value='cash'>Cash</option>
@@ -56,23 +55,9 @@ const RentForm = ({ rentData }: { rentData: StrapiRent }) => {
         <textarea
           name='notes'
           id='notes'
-          defaultValue={rentData.notes}
+          defaultValue={rentData?.notes ?? ''}
           className='bg-gray-400 px-4 text-gray-900'
         />
-      </div>
-      <div className='flex gap-4 text-center justify-between'>
-        <button
-          type='submit'
-          className='mt-4 w-full bg-green-600 p-3 rounded-xs active:scale-95 transition-transform cursor-pointer'
-        >
-          Save
-        </button>
-        <Link
-          to='/rent'
-          className='mt-4 w-full text-red-500 border-2 border-red-600 p-3 rounded-xs active:scale-95 transition-transform'
-        >
-          Cancel
-        </Link>
       </div>
     </>
   );

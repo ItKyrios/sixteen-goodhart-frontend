@@ -37,7 +37,7 @@ export async function getRents(jwt: string | null): Promise<StrapiRent[]> {
 export async function updateRent(
   documentId: string,
   updatedRent: Partial<StrapiRent>,
-  jwt: string,
+  jwt: string | null,
 ) {
   const res = await fetch(
     `${import.meta.env.VITE_API_URL}/rents/${documentId}`,

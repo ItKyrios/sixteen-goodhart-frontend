@@ -61,6 +61,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [appState]);
 
+  // ⭐ 3. Remove any corrupted expiry items
+  useEffect(() => {
+    setAppState((prev) => ({
+      ...prev,
+      expiry: prev.expiry.filter(
+        (item) =>
+          item &&
+          typeof item.documentId === 'string' &&
+          item.documentId.length > 0,
+      ),
+    }));
+  }, []);
+
   //   Calculate total days left for rent tile in home page
   const calcDaysLeft = (rentItem: Rent) => {
     const due = new Date(rentItem?.nextDueDate);

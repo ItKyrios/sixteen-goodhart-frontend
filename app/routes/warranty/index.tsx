@@ -1,10 +1,12 @@
 import type { Route } from './+types';
-import { Link, redirect, useLocation } from 'react-router';
+import { Link, redirect, useLoaderData, useLocation } from 'react-router';
 import Message from '~/components/Message';
 import type { Warranty } from '~/types';
 import WarrantyOverviewForm from '~/components/warranty/WarrantyOverviewForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import { useAppContext } from '~/context/AppContext';
+import { getWarranties } from '~/services/warranty.server';
+import { useEffect } from 'react';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,15 +15,36 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Loader: ONLY checks if the user is logged in, else redirect, return null.
+// Loader: Check if user is logged in else redirect and fetch data if redirected from add page
 export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const shouldRefresh = url.searchParams.get('refresh') === '1';
+  if (!shouldRefresh) {
+    // No SSR fetch needed
+    return null;
+  }
+
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-  return null;
+
+  const warrantyData = await getWarranties(jwt);
+  return warrantyData;
 }
 
 const WarrantyPage = () => {
-  const { appState } = useAppContext();
+  const loaderData = useLoaderData<typeof loader>();
+  const { appState, setAppState } = useAppContext();
+
+  useEffect(() => {
+    if (loaderData) {
+      // SSR hydration ONLY after create
+      setAppState((prev) => ({
+        ...prev,
+        warranty: loaderData,
+      }));
+    }
+  }, [loaderData]);
+
   const warranties = appState.warranty;
 
   const { search } = useLocation();

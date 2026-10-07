@@ -1,5 +1,5 @@
 import type { Route } from './+types';
-import { Link, Navigate, redirect, useFetcher } from 'react-router';
+import { Form, Link, Navigate, redirect, useFetcher } from 'react-router';
 import { createGrocery } from '~/services/grocery.server';
 import GroceryForm from '~/components/grocery/GroceryForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
@@ -21,45 +21,17 @@ export async function action({ request }: Route.ActionArgs) {
     done: Boolean(form.get('done')),
   };
 
-  // Background create
-  createGrocery(newItem, jwt).catch((err) => console.error(err));
-  return { ok: true, created: newItem };
+  await createGrocery(newItem, jwt);
+  return redirect(
+    '/groceries?message=Grocery item added successfully!&refresh=1',
+  );
 }
 
 const GroceryAddPage = () => {
-  const fetcher = useFetcher();
-  const { setAppState } = useAppContext();
-  const [redirectToList, setRedirectToList] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (fetcher.data?.created) {
-      const tempId = `temp-${Date.now()}`;
-
-      const newItem = {
-        documentId: tempId,
-        id: tempId,
-        ...fetcher.data.created,
-      };
-
-      // Update AppContext immediately
-      setAppState((prev) => ({
-        ...prev,
-        groceries: [...prev.groceries, newItem],
-      }));
-
-      // Redirect instantly
-      setRedirectToList('/groceries?message=Grocery item added successfully!');
-    }
-  }, [fetcher.data]);
-
-  if (redirectToList) {
-    return <Navigate to={redirectToList} replace />;
-  }
-
   return (
     <div className='p-4 text-white'>
       <h1 className='text-3xl font-bold text-white mb-2'>Add Grocery Item</h1>
-      <fetcher.Form method='post' className='flex flex-col gap-3'>
+      <Form method='post' className='flex flex-col gap-3'>
         <GroceryForm />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -76,7 +48,7 @@ const GroceryAddPage = () => {
             Cancel
           </Link>
         </div>
-      </fetcher.Form>
+      </Form>
     </div>
   );
 };

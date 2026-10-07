@@ -4,7 +4,8 @@ import { FadeLoader } from 'react-spinners';
 
 const MainLayout = () => {
   const navigation = useNavigation();
-  const isLoading = navigation.state == 'loading';
+  const isLoading =
+    navigation.state == 'submitting' || navigation.state == 'loading';
 
   return (
     <>

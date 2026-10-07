@@ -1,34 +1,25 @@
 import type { Route } from './+types';
-import type { Subscription } from '~/types';
-import { Link, Form, redirect } from 'react-router';
+import { Link, redirect, useFetcher, useParams, Navigate } from 'react-router';
 import {
-  getSubscriptionByDocumentId,
+  deleteSubscription,
   updateSubscription,
 } from '~/services/subscription.server';
 import SubscriptionForm from '~/components/subscription/SubscriptionForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { useEffect, useState } from 'react';
 
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: Fetch subscription by documentId
-export async function loader({
-  params,
-  request,
-}: Route.LoaderArgs & { params: Params }): Promise<{
-  subscription: Subscription;
-}> {
+// Loader: ONLY checks if the user is logged in, else redirect, return null.
+export async function loader({ request }: Route.LoaderArgs) {
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-
-  const { documentId } = params;
-  const subscription = await getSubscriptionByDocumentId(documentId, jwt);
-  if (!subscription)
-    throw new Response('Subscription not found', { status: 404 });
-  return { subscription };
+  return null;
 }
 
-// Action: Updated subscription in Strapi
+// Action: ONLY update Strapi (no AppContext here)
 export async function action({
   request,
   params,
@@ -38,6 +29,13 @@ export async function action({
 
   const { documentId } = params;
   const form = await request.formData();
+  const actionType = form.get('_action');
+
+  if (actionType == 'delete') {
+    // Background delete
+    deleteSubscription(documentId, jwt).catch((err) => console.error(err));
+    return { ok: true, deleted: true };
+  }
 
   const updated = {
     name: String(form.get('name')),
@@ -50,18 +48,58 @@ export async function action({
     notes: String(form.get('notes')),
   };
 
-  await updateSubscription(documentId, updated, jwt);
-  return redirect(
-    '/subscription?message=Subscription item updated sucessfully!',
+  // Background update
+  updateSubscription(documentId, updated, jwt).catch((err) =>
+    console.error(err),
   );
+  return { ok: true, updated };
 }
 
-const SubscriptionEditPage = ({
-  loaderData,
-}: {
-  loaderData: { subscription: Subscription };
-}) => {
-  const { subscription } = loaderData;
+const SubscriptionEditPage = () => {
+  const fetcher = useFetcher();
+  const { documentId } = useParams();
+  const { appState, setAppState } = useAppContext();
+  const [redirectToList, setRedirectToList] = useState<string | null>(null);
+
+  const subscription = appState.subscription.find(
+    (e) => e.documentId === documentId,
+  );
+
+  useEffect(() => {
+    // Update AppContext immediately when the fetcher completes
+    if (fetcher.data?.updated) {
+      const partial = fetcher.data.updated;
+
+      setAppState((prev) => ({
+        ...prev,
+        subscription: prev.subscription.map((item) =>
+          item.documentId === documentId ? { ...item, ...partial } : item,
+        ),
+      }));
+
+      setRedirectToList(
+        '/subscription?message=Subscription item updated successfully!',
+      );
+    }
+
+    // Delete from AppContext
+    if (fetcher.data?.deleted) {
+      setAppState((prev) => ({
+        ...prev,
+        subscription: prev.subscription.filter(
+          (item) => item.documentId !== documentId,
+        ),
+      }));
+
+      setRedirectToList(
+        '/subscription?message=Subscription item deleted successfully!',
+      );
+    }
+  }, [fetcher.data]);
+
+  if (redirectToList) {
+    return <Navigate to={redirectToList} replace />;
+  }
 
   return (
     <div className='p-4 text-white'>
@@ -69,7 +107,8 @@ const SubscriptionEditPage = ({
         <h1 className='text-3xl font-bold text-white mb-2'>
           Edit Subscription
         </h1>
-        <Form method='post' className='ml-auto'>
+
+        <fetcher.Form method='post' className='ml-auto'>
           <input type='hidden' name='_action' value='delete' />
           <button
             type='submit'
@@ -77,10 +116,10 @@ const SubscriptionEditPage = ({
           >
             Delete
           </button>
-        </Form>
+        </fetcher.Form>
       </div>
 
-      <Form method='post' className='flex flex-col gap-3'>
+      <fetcher.Form method='post' className='flex flex-col gap-3'>
         <SubscriptionForm sub={subscription} />
 
         <div className='flex gap-4 text-center justify-between'>
@@ -97,7 +136,7 @@ const SubscriptionEditPage = ({
             Cancel
           </Link>
         </div>
-      </Form>
+      </fetcher.Form>
     </div>
   );
 };

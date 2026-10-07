@@ -1,11 +1,17 @@
 import type { Route } from './+types';
-import { Link, redirect, useFetcher, useLocation } from 'react-router';
+import {
+  Link,
+  redirect,
+  useFetcher,
+  useLoaderData,
+  useLocation,
+} from 'react-router';
 import Message from '~/components/Message';
 import { useState, useEffect } from 'react';
 import CheckListItem from '~/components/CheckListItem';
 import DoneCheckListItem from '~/components/DoneCheckListItem';
 import type { CheckListItemBase } from '~/types';
-import { deleteTodo, updateTodo } from '~/services/todo.server';
+import { deleteTodo, getTodos, updateTodo } from '~/services/todo.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import { useAppContext } from '~/context/AppContext';
 
@@ -19,11 +25,20 @@ export function meta({}: Route.MetaArgs) {
 // Route params for manual routing
 type Params = { documentId: string };
 
-// Loader: ONLY checks if the user is logged in, else redirect, return null.
+// Loader: Check if user is logged in else redirect and fetch data if redirected from add page
 export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const shouldRefresh = url.searchParams.get('refresh') === '1';
+  if (!shouldRefresh) {
+    // No SSR fetch needed
+    return null;
+  }
+
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
-  return null;
+
+  const todoData = await getTodos(jwt);
+  return todoData;
 }
 
 // Action: ONLY update Strapi (no AppContext here)
@@ -56,8 +71,19 @@ export async function action({
 
 const TodoPage = () => {
   const fetcher = useFetcher();
+  const loaderData = useLoaderData<typeof loader>();
   const [showDone, setShowDone] = useState(false);
   const { appState, setAppState } = useAppContext();
+
+  useEffect(() => {
+    if (loaderData) {
+      // SSR hydration ONLY after create
+      setAppState((prev) => ({
+        ...prev,
+        todo: loaderData,
+      }));
+    }
+  }, [loaderData]);
 
   const todos = appState.todo;
 

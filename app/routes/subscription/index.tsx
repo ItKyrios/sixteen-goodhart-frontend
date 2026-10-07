@@ -1,11 +1,11 @@
 import type { Route } from './+types';
-import { Link, redirect, useLocation } from 'react-router';
-import useSubscription from '~/context/SubscriptionContext';
+import { Link, redirect, useLoaderData, useLocation } from 'react-router';
 import Message from '~/components/Message';
-import { useEffect } from 'react';
 import type { Subscription } from '~/types';
-import { getSubscriptions } from '~/services/subscription.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
+import { useAppContext } from '~/context/AppContext';
+import { getSubscriptions } from '~/services/subscription.server';
+import { useEffect } from 'react';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,22 +14,38 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({
-  request,
-}: Route.LoaderArgs): Promise<{ subscriptionData: Subscription[] }> {
+// Loader: Check if user is logged in else redirect and fetch data if redirected from add page
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const shouldRefresh = url.searchParams.get('refresh') === '1';
+
+  if (!shouldRefresh) {
+    // No SSR fetch needed
+    return null;
+  }
+
   const jwt = getJwtFromRequest(request);
   if (isJwtExpired(jwt)) throw redirect('/login');
 
   const subscriptionData = await getSubscriptions(jwt);
-  return { subscriptionData };
+  return subscriptionData;
 }
 
-const SubscriptionPage = ({ loaderData }: Route.ComponentProps) => {
-  const { subscriptionData } = loaderData;
-  const { subscriptions, setSubscriptions, totalMonthly } = useSubscription();
+const SubscriptionPage = () => {
+  const loaderData = useLoaderData<typeof loader>();
+  const { appState, setAppState, totalMonthly } = useAppContext();
+
   useEffect(() => {
-    setSubscriptions(subscriptionData);
-  }, [subscriptionData, setSubscriptions]);
+    if (loaderData) {
+      // SSR hydration ONLY after create
+      setAppState((prev) => ({
+        ...prev,
+        subscription: loaderData,
+      }));
+    }
+  }, [loaderData]);
+
+  const subscriptions = appState.subscription;
 
   const { search } = useLocation();
   const message = new URLSearchParams(search).get('message');
