@@ -14,6 +14,7 @@ import type { CheckListItemBase } from '~/types';
 import { deleteTodo, getTodos, updateTodo } from '~/services/todo.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import { useAppContext } from '~/context/AppContext';
+import { playSound } from 'react-sounds';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -91,6 +92,7 @@ const TodoPage = () => {
   const message = new URLSearchParams(search).get('message');
 
   const toggleDone = (item: CheckListItemBase) => {
+    playSound('notification/notification');
     fetcher.submit(
       {
         _action: 'toggle',
@@ -110,6 +112,7 @@ const TodoPage = () => {
   };
 
   const deleteItem = (documentId: string) => {
+    playSound('notification/popup');
     fetcher.submit(
       { _action: 'delete', documentId: String(documentId) },
       { method: 'post' },

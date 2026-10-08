@@ -18,6 +18,7 @@ import fetchAllUserData from '~/utills/fetchAllUserData';
 import { createGrocery } from '~/services/grocery.server';
 import { createTodo } from '~/services/todo.server';
 import { BarLoader } from 'react-spinners';
+import { useSound } from 'react-sounds';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -82,6 +83,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { appState, setAppState, calcDaysLeft, totalMonthly } = useAppContext();
   const [quickMessage, setQuickMesage] = useState('');
   const [isInstantLoading, setIsInstantLoading] = useState(false);
+  const { play } = useSound('notification/success');
   const fetcher = useFetcher();
 
   // Hydrate global state once
@@ -180,6 +182,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
     // 2. Replace optimistic item with real Strapi item
     if (fetcher.data?.created) {
+      play();
       setIsInstantLoading(false);
       const realItem = fetcher.data.created;
       const type = fetcher.formData?.get('type');

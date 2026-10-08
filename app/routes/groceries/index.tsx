@@ -18,6 +18,7 @@ import DoneCheckListItem from '~/components/DoneCheckListItem';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import { useAppContext } from '~/context/AppContext';
 import type { CheckListItemBase, GroceryItem } from '~/types';
+import { playSound, useSound } from 'react-sounds';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -95,6 +96,7 @@ const GroceriesPage = () => {
   const message = new URLSearchParams(search).get('message');
 
   const toggleDone = (item: CheckListItemBase) => {
+    playSound('notification/notification');
     fetcher.submit(
       {
         _action: 'toggle',
@@ -114,6 +116,7 @@ const GroceriesPage = () => {
   };
 
   const deleteItem = (documentId: string) => {
+    playSound('notification/popup');
     fetcher.submit(
       { _action: 'delete', documentId: String(documentId) },
       { method: 'post' },
