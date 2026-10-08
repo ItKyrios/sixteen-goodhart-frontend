@@ -2,7 +2,13 @@ import type { FetcherWithComponents } from 'react-router';
 import { useEffect, useState } from 'react';
 import { FaPlusCircle, FaShoppingCart } from 'react-icons/fa';
 
-const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
+const QuickAddForm = ({
+  fetcher,
+  disabled,
+}: {
+  fetcher: FetcherWithComponents<any>;
+  disabled: boolean;
+}) => {
   const [value, setValue] = useState('');
 
   // Clear input AFTER fetcher submission completes
@@ -21,6 +27,7 @@ const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
         className='w-full p-3 bg-gray-800 rounded-xs outline-none mb-3'
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        disabled={disabled}
       />
 
       <div className='flex gap-3'>
@@ -28,7 +35,8 @@ const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
           type='submit'
           name='type'
           value='grocery'
-          className='flex-1 bg-green-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'
+          className={`flex-1  p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform ${disabled ? 'bg-gray-500 text-gray-400 cursor-not-allowed' : 'bg-green-600 cursor-pointer'}`}
+          disabled={disabled}
         >
           <div className='flex justify-between items-center'>
             <span>Add to Grocery</span>
@@ -39,7 +47,8 @@ const QuickAddForm = ({ fetcher }: { fetcher: FetcherWithComponents<any> }) => {
           type='submit'
           name='type'
           value='todo'
-          className='flex-1 bg-blue-600 p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform cursor-pointer'
+          className={`flex-1  p-3 rounded-xs text-sm font-medium active:scale-95 transition-transform ${disabled ? 'bg-gray-500 text-gray-400 cursor-not-allowed' : 'bg-blue-600 cursor-pointer'}`}
+          disabled={disabled}
         >
           <div className='flex justify-between items-center'>
             <span>Add Todo </span>

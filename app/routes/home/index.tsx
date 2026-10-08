@@ -17,6 +17,7 @@ import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import fetchAllUserData from '~/utills/fetchAllUserData';
 import { createGrocery } from '~/services/grocery.server';
 import { createTodo } from '~/services/todo.server';
+import { BarLoader } from 'react-spinners';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -45,7 +46,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (type === 'grocery') {
-    await createGrocery(
+    const realItem = await createGrocery(
       {
         name,
         quantity: 1,
@@ -56,10 +57,12 @@ export async function action({ request }: Route.ActionArgs) {
       },
       jwt || '',
     );
+
+    return { ok: true, created: realItem };
   }
 
   if (type === 'todo') {
-    await createTodo(
+    const realItem = await createTodo(
       {
         name,
         assignedTo: 'You',
@@ -70,14 +73,15 @@ export async function action({ request }: Route.ActionArgs) {
       },
       jwt || '',
     );
+    return { ok: true, created: realItem };
   }
-
   return { ok: true };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { appState, setAppState, calcDaysLeft, totalMonthly } = useAppContext();
   const [quickMessage, setQuickMesage] = useState('');
+  const [isInstantLoading, setIsInstantLoading] = useState(false);
   const fetcher = useFetcher();
 
   // Hydrate global state once
@@ -128,8 +132,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     )
     .at(0);
 
-  // Using Fetcher for Quick add of Grocery and Todo items
+  // QUICK ADD - Optimistic insert + Real item replacement
   useEffect(() => {
+    // 1. Optimistic insert (Fast UI)
     if (fetcher.state === 'submitting') {
       const type = fetcher.formData?.get('type');
       const name = String(fetcher.formData?.get('name'));
@@ -172,12 +177,41 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         setQuickMesage(`Added todo: ${name}`);
       }
     }
-  }, [fetcher.state]);
+
+    // 2. Replace optimistic item with real Strapi item
+    if (fetcher.data?.created) {
+      setIsInstantLoading(false);
+      const realItem = fetcher.data.created;
+      const type = fetcher.formData?.get('type');
+
+      setAppState((prev) => {
+        if (type === 'grocery') {
+          const filtered = prev.groceries.filter(
+            (i) => typeof i.id === 'number',
+          );
+          return {
+            ...prev,
+            groceries: [...filtered, realItem],
+          };
+        }
+
+        if (type === 'todo') {
+          const filtered = prev.todo.filter((i) => typeof i.id === 'number');
+          return {
+            ...prev,
+            todo: [...filtered, realItem],
+          };
+        }
+        return prev;
+      });
+    }
+  }, [fetcher.state, fetcher.data]);
 
   return (
     <>
-      <fetcher.Form method='post'>
-        <QuickAddForm fetcher={fetcher} />
+      <fetcher.Form method='post' onSubmit={() => setIsInstantLoading(true)}>
+        {isInstantLoading && <BarLoader color={'lime'} width={'100%'} />}
+        <QuickAddForm fetcher={fetcher} disabled={isInstantLoading} />
       </fetcher.Form>
 
       {quickMessage && <Message message={quickMessage} />}
