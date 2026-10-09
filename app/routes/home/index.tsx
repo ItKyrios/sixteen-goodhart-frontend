@@ -7,7 +7,7 @@ import {
   FaShoppingBasket,
 } from 'react-icons/fa';
 import type { Route } from './+types/index';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, redirect, useFetcher } from 'react-router';
 import { useAppContext } from '~/context/AppContext';
 import Tile from '~/components/Tile';
@@ -18,7 +18,7 @@ import fetchAllUserData from '~/utills/fetchAllUserData';
 import { createGrocery } from '~/services/grocery.server';
 import { createTodo } from '~/services/todo.server';
 import { BarLoader } from 'react-spinners';
-import { useSound } from 'react-sounds';
+import { playSound } from 'react-sounds';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -83,7 +83,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { appState, setAppState, calcDaysLeft, totalMonthly } = useAppContext();
   const [quickMessage, setQuickMesage] = useState('');
   const [isInstantLoading, setIsInstantLoading] = useState(false);
-  const { play } = useSound('notification/success');
+  const didSubmitRef = useRef(false);
+  const shouldFlipRef = useRef(false);
   const fetcher = useFetcher();
 
   // Hydrate global state once
@@ -137,82 +138,98 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   // QUICK ADD - Optimistic insert + Real item replacement
   useEffect(() => {
     // 1. Optimistic insert (Fast UI)
-    if (fetcher.state === 'submitting') {
-      const type = fetcher.formData?.get('type');
-      const name = String(fetcher.formData?.get('name'));
+    if (fetcher.state !== 'submitting') return;
 
+    const type = fetcher.formData?.get('type');
+    const name = String(fetcher.formData?.get('name'));
+
+    if (type === 'grocery') {
+      setAppState((prev) => ({
+        ...prev,
+        groceries: [
+          ...prev.groceries,
+          {
+            id: '',
+            name,
+            assignedTo: 'You',
+            category: 'others',
+            priority: 'medium',
+            quantity: 1,
+            done: false,
+          },
+        ],
+      }));
+      setQuickMesage(`Added grocery: ${name}`);
+    }
+
+    if (type === 'todo') {
+      setAppState((prev) => ({
+        ...prev,
+        todo: [
+          ...prev.todo,
+          {
+            id: '',
+            name,
+            assignedTo: 'You',
+            category: 'others',
+            priority: 'medium',
+            dueDate: `${new Date().toLocaleDateString('en-CA')}`,
+            done: false,
+          },
+        ],
+      }));
+      setQuickMesage(`Added todo: ${name}`);
+    }
+  }, [fetcher.state]);
+
+  useEffect(() => {
+    // 2. Replace optimistic item with real Strapi item
+    if (!fetcher.data?.created) return;
+    const realItem = fetcher.data.created;
+    const type = fetcher.formData?.get('type');
+
+    setAppState((prev) => {
       if (type === 'grocery') {
-        setAppState((prev) => ({
+        const filtered = prev.groceries.filter((i) => typeof i.id === 'number');
+        return {
           ...prev,
-          groceries: [
-            ...prev.groceries,
-            {
-              id: '',
-              name,
-              assignedTo: 'You',
-              category: 'others',
-              priority: 'medium',
-              quantity: 1,
-              done: false,
-            },
-          ],
-        }));
-        setQuickMesage(`Added grocery: ${name}`);
+          groceries: [...filtered, realItem],
+        };
       }
 
       if (type === 'todo') {
-        setAppState((prev) => ({
+        const filtered = prev.todo.filter((i) => typeof i.id === 'number');
+        return {
           ...prev,
-          todo: [
-            ...prev.todo,
-            {
-              id: '',
-              name,
-              assignedTo: 'You',
-              category: 'others',
-              priority: 'medium',
-              dueDate: `${new Date().toLocaleDateString('en-CA')}`,
-              done: false,
-            },
-          ],
-        }));
-        setQuickMesage(`Added todo: ${name}`);
+          todo: [...filtered, realItem],
+        };
+      }
+      return prev;
+    });
+  }, [fetcher.data]);
+
+  useEffect(() => {
+    // 3. Reset instant loading ONLY when fetcher is idle
+    if (fetcher.state === 'idle') {
+      setIsInstantLoading(false);
+      if (didSubmitRef.current) {
+        playSound('notification/info');
+        didSubmitRef.current = false;
+        shouldFlipRef.current = false;
       }
     }
-
-    // 2. Replace optimistic item with real Strapi item
-    if (fetcher.data?.created) {
-      play();
-      setIsInstantLoading(false);
-      const realItem = fetcher.data.created;
-      const type = fetcher.formData?.get('type');
-
-      setAppState((prev) => {
-        if (type === 'grocery') {
-          const filtered = prev.groceries.filter(
-            (i) => typeof i.id === 'number',
-          );
-          return {
-            ...prev,
-            groceries: [...filtered, realItem],
-          };
-        }
-
-        if (type === 'todo') {
-          const filtered = prev.todo.filter((i) => typeof i.id === 'number');
-          return {
-            ...prev,
-            todo: [...filtered, realItem],
-          };
-        }
-        return prev;
-      });
-    }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state]);
 
   return (
     <>
-      <fetcher.Form method='post' onSubmit={() => setIsInstantLoading(true)}>
+      <fetcher.Form
+        method='post'
+        onSubmit={() => {
+          setIsInstantLoading(true);
+          didSubmitRef.current = true;
+          shouldFlipRef.current = true;
+        }}
+      >
         {isInstantLoading && <BarLoader color={'lime'} width={'100%'} />}
         <QuickAddForm fetcher={fetcher} disabled={isInstantLoading} />
       </fetcher.Form>
@@ -236,6 +253,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             color='#0ca987'
             icon={<FaShoppingBasket />}
             urgency={activeGroceryItems.length > 10 ? 'high' : ''}
+            shouldFlip={shouldFlipRef.current}
           />
         </Link>
         <Link to='/warranty'>
@@ -307,6 +325,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             color='#1137a8'
             icon={<FaListAlt />}
             urgency={activeTodoItems.length > 10 ? 'high' : ''}
+            shouldFlip={shouldFlipRef.current}
           />
         </Link>
       </div>

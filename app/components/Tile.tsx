@@ -7,12 +7,21 @@ type TileProps = {
   color?: string; //hex or tailwind color name
   icon?: React.ReactNode; // optional icon to display in the tile
   urgency?: string; // optional that translates to border color to determine urgency
+  shouldFlip?: boolean;
 };
 
-const Tile = ({ title, value, color, icon, urgency }: TileProps) => {
+const Tile = ({
+  title,
+  value,
+  color,
+  icon,
+  urgency,
+  shouldFlip,
+}: TileProps) => {
   const [flip, setFlip] = useState(false);
 
   useEffect(() => {
+    if (!shouldFlip) return; //only flip when Home tells to
     setFlip(true);
     const timer = setTimeout(() => setFlip(false), 600);
     return () => clearTimeout(timer);

@@ -92,7 +92,7 @@ const TodoPage = () => {
   const message = new URLSearchParams(search).get('message');
 
   const toggleDone = (item: CheckListItemBase) => {
-    playSound('notification/notification');
+    playSound('notification/completed');
     fetcher.submit(
       {
         _action: 'toggle',
