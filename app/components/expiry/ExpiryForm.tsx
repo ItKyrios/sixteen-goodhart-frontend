@@ -7,6 +7,15 @@ type Props = {
 const ExpiryForm = ({ expiryItem: expiry }: Props) => {
   return (
     <>
+      <img
+        src={
+          expiry?.media
+            ? `${expiry?.media?.url ?? ''}`
+            : `https://placehold.co/400?text=${expiry?.name ?? 'Create your new item'}`
+        }
+        alt={expiry?.name}
+        className='bg-gray-300 md:justify-self-end object-cover rounded-lg w-full h-20 align-end'
+      />
       <div className='grid grid-cols-2'>
         <label htmlFor='name'>Name:</label>
         <input
@@ -65,16 +74,6 @@ const ExpiryForm = ({ expiryItem: expiry }: Props) => {
           name='notes'
           id='notes'
           defaultValue={expiry?.notes ?? ''}
-          className='px-2 bg-gray-200 text-gray-900'
-        />
-      </div>
-      <div className='grid grid-cols-2'>
-        <label htmlFor='photoUrl'>Photo Url:</label>
-        <input
-          type='text'
-          name='photoUrl'
-          id='photoUrl'
-          defaultValue={expiry?.media?.url ?? ''}
           className='px-2 bg-gray-200 text-gray-900'
         />
       </div>

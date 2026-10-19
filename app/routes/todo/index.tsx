@@ -15,6 +15,7 @@ import { deleteTodo, getTodos, updateTodo } from '~/services/todo.server';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
 import { useAppContext } from '~/context/AppContext';
 import { playSound } from 'react-sounds';
+import HoldButton from '~/components/ui/HoldButton';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -67,6 +68,16 @@ export async function action({
     return { ok: true, deleted: documentId };
   }
 
+  if (actionType == 'delete-all-done') {
+    const doneIds = JSON.parse(String(form.get('doneIds')));
+
+    // Background delete all completed
+    doneIds.forEach((documentId: string) => {
+      deleteTodo(documentId, jwt).catch((err) => console.error(err));
+    });
+    return { ok: true, deletedAll: true, deletedIds: doneIds };
+  }
+
   return null;
 }
 
@@ -77,7 +88,7 @@ const TodoPage = () => {
   const { appState, setAppState } = useAppContext();
 
   useEffect(() => {
-    if (loaderData) {
+    if (loaderData && loaderData.length !== appState.todo.length) {
       // SSR hydration ONLY after create
       setAppState((prev) => ({
         ...prev,
@@ -149,6 +160,15 @@ const TodoPage = () => {
         todo: prev.todo.filter((item) => item.documentId !== documentId),
       }));
     }
+
+    if (fetcher.data?.deletedAll) {
+      const deletedIds = fetcher.data.deletedIds;
+
+      setAppState((prev) => ({
+        ...prev,
+        todo: prev.todo.filter((item) => !deletedIds.includes(item.documentId)),
+      }));
+    }
   }, [fetcher.data]);
 
   return (
@@ -196,13 +216,43 @@ const TodoPage = () => {
 
       {/* Completed Section */}
       <div className='mt-6'>
-        <button
-          onClick={() => setShowDone(!showDone)}
-          className='w-full bg-gray-800 p-2 rounded-xs text-left flex justify-between items-center'
-        >
-          <span className='text-sm font-semibold'>Completed Items</span>
-          <span>{showDone ? '▲' : '▼'}</span>
-        </button>
+        <div className='flex items-center'>
+          <button
+            onClick={() => setShowDone(!showDone)}
+            className='w-full bg-gray-800 p-2 rounded-xs text-left flex justify-between items-center'
+          >
+            <span className='text-sm font-semibold'>
+              {showDone ? 'Hide' : 'View'} Completed Items
+            </span>
+            <span>{showDone ? '▲' : '▼'}</span>
+          </button>
+
+          {doneItems?.length > 0 && (
+            <HoldButton
+              doneLabel='Deleted'
+              backgroundColor='#3f0d0d'
+              fillColor='#dc2626'
+              textColor='#fef2f2'
+              fillTextColor='#ffffff'
+              size='sm'
+              radius={3}
+              className='ml-2'
+              onHold={() => {
+                playSound('notification/popup');
+
+                fetcher.submit(
+                  {
+                    _action: 'delete-all-done',
+                    doneIds: JSON.stringify(doneItems.map((i) => i.documentId)),
+                  },
+                  { method: 'post' },
+                );
+              }}
+            >
+              Clear Completed
+            </HoldButton>
+          )}
+        </div>
 
         {showDone && (
           <div className='flex flex-col gap-2 mt-3'>

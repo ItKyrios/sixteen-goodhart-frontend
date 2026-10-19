@@ -35,7 +35,7 @@ const CheckListItem = ({
 
         {/* Only show for high priority */}
         {item.priority === 'high' && (
-          <div className='px-4 border border-red-700 text-red-700 text-xs rounded'>
+          <div className='px-2 border border-red-700 text-red-700 text-xs rounded'>
             {item.priority.charAt(0).toUpperCase() +
               item.priority.slice(1).toLowerCase()}
           </div>

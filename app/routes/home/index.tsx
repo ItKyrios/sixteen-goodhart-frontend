@@ -89,21 +89,20 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   // Hydrate global state once
   useEffect(() => {
-    if (!appState.loaded) {
-      setAppState((prev) => ({
-        ...prev,
-        expiry: loaderData.expiryData,
-        warranty: loaderData.warrantyData,
-        groceries: loaderData.groceriesData,
-        rent: loaderData.rentData,
-        subscription: loaderData.subscriptionData,
-        todo: loaderData.todosData,
-        loaded: true,
-      }));
-    }
-  }, [appState.loaded, loaderData, setAppState]);
+    setAppState((prev) => ({
+      ...prev,
+      expiry: loaderData.expiryData,
+      warranty: loaderData.warrantyData,
+      groceries: loaderData.groceriesData,
+      rent: loaderData.rentData,
+      subscription: loaderData.subscriptionData,
+      todo: loaderData.todosData,
+      user: loaderData.userData,
+      loaded: true,
+    }));
+  }, [loaderData]);
 
-  const { expiry, warranty, groceries, rent, subscription, todo } = appState;
+  const { expiry, warranty, groceries, rent, todo } = appState;
 
   // Setting up rent data to global context
   const daysLeft = calcDaysLeft(rent[0]);

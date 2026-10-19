@@ -2,15 +2,25 @@ import { Outlet } from 'react-router';
 import { useNavigation } from 'react-router';
 import Hero from '~/components/Hero';
 import { FadeLoader } from 'react-spinners';
+import { useState } from 'react';
+import { useAppContext } from '~/context/AppContext';
 
 const HomeLayout = () => {
+  const { appState } = useAppContext();
+  const userName = appState?.user?.username ?? 'User';
   const navigation = useNavigation();
   const isLoading =
     navigation.state == 'submitting' || navigation.state == 'loading';
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
 
   return (
     <>
-      <Hero userName='Pramit' />
+      <Hero
+        userName={userName}
+        collapsed={heroCollapsed}
+        onCollapse={() => setHeroCollapsed(true)}
+        onExpand={() => setHeroCollapsed(false)}
+      />
 
       <section className='max-w-6xl mx-auto px-6 my-8'>
         {/* Overlay spinner here */}

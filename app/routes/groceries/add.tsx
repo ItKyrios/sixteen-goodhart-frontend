@@ -1,10 +1,8 @@
 import type { Route } from './+types';
-import { Form, Link, Navigate, redirect, useFetcher } from 'react-router';
+import { Form, Link, redirect } from 'react-router';
 import { createGrocery } from '~/services/grocery.server';
 import GroceryForm from '~/components/grocery/GroceryForm';
 import { getJwtFromRequest, isJwtExpired } from '~/utills/cookies';
-import { useAppContext } from '~/context/AppContext';
-import { useEffect, useState } from 'react';
 
 export async function action({ request }: Route.ActionArgs) {
   const jwt = getJwtFromRequest(request);

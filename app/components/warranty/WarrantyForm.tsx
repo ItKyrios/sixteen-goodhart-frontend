@@ -7,6 +7,15 @@ type Props = {
 const WarrantyForm = ({ warrantyItem: w }: Props) => {
   return (
     <>
+      <img
+        src={
+          w?.media
+            ? `${w?.media?.url ?? ''}`
+            : `https://placehold.co/400?text=${w?.name ?? 'Create your new item'}`
+        }
+        alt={w?.name}
+        className='bg-gray-300 md:justify-self-end object-cover rounded-lg w-full h-20 align-end'
+      />
       <div className='grid grid-cols-2'>
         <label htmlFor='name'>Name:</label>
         <input
@@ -64,16 +73,6 @@ const WarrantyForm = ({ warrantyItem: w }: Props) => {
           name='notes'
           id='notes'
           defaultValue={w?.notes ?? ''}
-          className='px-2 bg-gray-200 text-gray-900'
-        />
-      </div>
-      <div className='grid grid-cols-2'>
-        <label htmlFor='photoUrl'>Photo Url:</label>
-        <input
-          type='text'
-          name='photoUrl'
-          id='photoUrl'
-          defaultValue={w?.media?.url ?? ''}
           className='px-2 bg-gray-200 text-gray-900'
         />
       </div>

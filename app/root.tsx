@@ -10,9 +10,6 @@ import {
 import type { Route } from './+types/root';
 import './app.css';
 import Header from './components/Header';
-import { RentProvider } from './context/RentContext';
-import { WarrantyProvider } from './context/WarrantyContext';
-import { SubscriptionProvider } from './context/SubscriptionContext';
 import { AppProvider } from './context/AppContext';
 
 export const links: Route.LinksFunction = () => [

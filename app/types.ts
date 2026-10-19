@@ -120,7 +120,13 @@ export type StrapiTodo = {
 };
 
 export type User = {
-  id: string;
+  id: number;
+  documentId?: string;
   username: string;
   email: string;
+  provider?: string;
+  confirmed?: boolean;
+  blocked?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
